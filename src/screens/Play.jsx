@@ -63,7 +63,8 @@ export default function Play() {
         <button className="btn sm" style={{ flex: 'none' }} onClick={addQuick}>+ Ajout</button>
       </div>
 
-      <OptionsForm mode={mode} opts={opts} setOpts={setOpts} />
+      <OptionsForm mode={mode} opts={opts} setOpts={setOpts}
+        players={pids.map((id) => roster.find((r) => r.id === id)).filter(Boolean)} />
 
       {mode.info && <p className="muted" style={{ fontSize: 13, lineHeight: 1.45, margin: '14px 2px 0' }}>{mode.info}</p>}
 
@@ -73,12 +74,37 @@ export default function Play() {
   )
 }
 
-function OptionsForm({ mode, opts, setOpts }) {
+function KillerNumbers({ players, opts, setOpts }) {
+  const numbers = opts.numbers || {}
+  const pick = (pid, n) => setOpts((o) => ({ ...o, numbers: { ...(o.numbers || {}), [pid]: n } }))
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div className="eyebrow" style={{ margin: '0 2px 8px' }}>Numéro de chaque joueur</div>
+      {players.map((pl) => {
+        const taken = new Set(Object.entries(numbers).filter(([id]) => id !== pl.id).map(([, n]) => n))
+        const cur = numbers[pl.id]
+        return (
+          <div key={pl.id} style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: pl.color, marginBottom: 6 }}>{pl.name}</div>
+            <div className="num-pick">
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                <button key={n} className={'np' + (cur === n ? ' on' : '')} disabled={taken.has(n) && cur !== n} onClick={() => pick(pl.id, n)}>{n}</button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function OptionsForm({ mode, opts, setOpts, players = [] }) {
   if (!mode.optionFields?.length) return null
   const set = (k, v) => setOpts((o) => ({ ...o, [k]: v }))
   return (
     <>
       <div className="section-title"><h2>Réglages {mode.name}</h2></div>
+      {mode.key === 'killer' && opts.assign === 'custom' && <KillerNumbers players={players} opts={opts} setOpts={setOpts} />}
       {mode.optionFields.map((f) => {
         if (f.type === 'choice') {
           const sel = opts[f.key]

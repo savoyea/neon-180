@@ -172,6 +172,12 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
   padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
 .chip.on{background:var(--neon);color:#04140A;border-color:var(--neon);box-shadow:0 0 14px rgba(57,255,106,.4)}
 
+.num-pick{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.num-pick .np{aspect-ratio:1;border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  color:var(--text);font-family:'Oswald';font-weight:600;font-size:13px;padding:0}
+.num-pick .np.on{background:var(--neon);color:#04140A;border-color:var(--neon);box-shadow:0 0 10px rgba(57,255,106,.4)}
+.num-pick .np:disabled{opacity:.25}
+
 .toggle-row{display:flex;align-items:center;justify-content:space-between;
   padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);margin-bottom:9px}
 .toggle-row .lbl b{font-family:'Oswald';font-weight:600;font-size:15px}
