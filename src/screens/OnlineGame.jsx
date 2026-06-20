@@ -12,6 +12,7 @@ import PlayersStrip from '../components/game/PlayersStrip.jsx'
 import CricketGrid from '../components/game/CricketGrid.jsx'
 import AtwBoard from '../components/game/AtwBoard.jsx'
 import DartPad from '../components/game/DartPad.jsx'
+import VoiceChat from '../components/game/VoiceChat.jsx'
 
 const fxKey = () => Date.now() + Math.random()
 const EMOTES = ['😈', '🔥', '💪', '😂', '🎯', '😮', '👏', '🥶']
@@ -173,6 +174,7 @@ export default function OnlineGame() {
         </button>
       } />
       <PlayersStrip game={g} mode={mode} />
+      <VoiceChat matchId={id} myId={myId} oppName={oppName} />
 
       <div className="game-mid">
         {mode.board === 'cricket' && <CricketGrid game={g} />}

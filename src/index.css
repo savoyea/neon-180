@@ -320,6 +320,16 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
 .flash.show .txt{transform:scale(1)}
 .flash .txt.bust{color:var(--red);text-shadow:0 0 40px rgba(255,77,77,.9)}
 
+/* chat vocal */
+.voice-panel{flex:none;margin-bottom:10px;display:flex;justify-content:center}
+.voice-panel .btn{width:auto}
+.voice-live{display:flex;align-items:center;gap:10px;padding:7px 12px;border:1px solid var(--line-strong);
+  border-radius:999px;background:var(--surface);width:100%;justify-content:center}
+.voice-status{font-family:'Oswald';font-size:13px;letter-spacing:.5px;color:var(--text)}
+.voice-dot{width:10px;height:10px;border-radius:50%;background:var(--muted-2);flex:none;transition:.1s}
+.voice-dot.on{background:var(--neon);box-shadow:0 0 12px var(--neon);transform:scale(1.25)}
+.icon-btn.muted{border-color:rgba(255,77,77,.5);color:var(--red)}
+
 /* online: waiting + chat */
 .waiting-turn{text-align:center;color:var(--muted);font-family:'Oswald';font-size:15px;letter-spacing:.5px;
   padding:26px 12px;border:1px dashed var(--line);border-radius:var(--r-sm);background:var(--surface)}
