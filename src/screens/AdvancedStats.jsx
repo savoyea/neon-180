@@ -27,10 +27,11 @@ export default function AdvancedStats() {
   }
 
   const totals = aggregateDartHits(history, profile?.username)
-  const { perNumber, bull, targets, totalDarts } = heatFromTotals(totals)
-  const ranked = Object.entries(perNumber).sort((a, b) => b[1] - a[1])
-  const fav = ranked[0]?.[1] ? ranked[0][0] : null
-  const weak = ranked.filter(([, c]) => c > 0).slice(-1)[0]?.[0]
+  const { targets, totalDarts } = heatFromTotals(totals)
+  const top = Object.entries(totals).filter(([k]) => k !== '—').sort((a, b) => b[1] - a[1])[0]
+  const sumZone = (pfx) => Object.keys(totals).filter((k) => (pfx === 'S' ? /^\d+$/.test(k) || k === '25' : k[0] === pfx)).reduce((s, k) => s + totals[k], 0)
+  const doublesHit = sumZone('D') + (totals['Bull'] || 0), triplesHit = sumZone('T')
+  const tip = top ? `Tu touches souvent le ${top[0]}` + (doublesHit < triplesHit / 2 ? ' · tu rates souvent les doubles' : '') : ''
 
   return (
     <div className="screen">
@@ -40,12 +41,9 @@ export default function AdvancedStats() {
         <div className="empty"><div className="big">📊</div><p>Joue quelques parties pour générer ta carte thermique.</p></div>
       ) : (
         <>
-          <div className="section-title"><h2>Carte thermique</h2><span className="hint">{totalDarts} fléchettes</span></div>
-          <HeatBoard perNumber={perNumber} bull={bull} />
-          <p className="muted" style={{ textAlign: 'center', fontSize: 13, margin: '10px 0 4px' }}>
-            {fav && <>🔥 Zone préférée : <b style={{ color: 'var(--neon)' }}>{fav}</b></>}
-            {weak && fav !== weak && <> · ❄️ À travailler : <b style={{ color: 'var(--cyan)' }}>{weak}</b></>}
-          </p>
+          <div className="section-title"><h2>Carte thermique</h2><span className="hint">{totalDarts} fléchettes · précision par zone</span></div>
+          <HeatBoard totals={totals} />
+          {tip && <div className="heat-tip">💡 {tip}.</div>}
 
           <div className="section-title"><h2>Cibles clés</h2></div>
           {targets.map((t) => (
