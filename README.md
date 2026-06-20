@@ -50,5 +50,6 @@ Le reste de l'app (accueil, sélecteur, pavé, fin de partie) le découvre autom
 ## Roadmap
 - **P1 ✅** Socle React + Supabase (auth, profils, app shell)
 - **P2 ✅** Moteur de jeu entièrement porté en React (6 modes), modulaire + enregistrement local des parties & stats
-- **P3** Amis & statuts · **P4** Multijoueur temps réel (Realtime) · **P5** Ligues & classements
+- **P3 ✅** Amis & statuts (recherche par pseudo, demandes, présence en ligne / hors ligne / en partie) sur Supabase
+- **P4** Multijoueur temps réel (Realtime) · **P5** Ligues & classements
 - **P6** Gamification (XP/badges/emotes) · puis **Dart-180+** (freemium Stripe)

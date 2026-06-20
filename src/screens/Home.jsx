@@ -1,17 +1,32 @@
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
 import Board from '../components/Board.jsx'
 import { MODE_LIST } from '../game/modes.js'
+import { getFriendships } from '../lib/friends.js'
 
 export default function Home() {
   const nav = useNavigate()
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const name = profile?.username || 'Joueur'
+  const [pending, setPending] = useState(0)
+
+  useEffect(() => {
+    if (!user?.id) return
+    getFriendships(user.id).then((d) => setPending(d.incoming.length)).catch(() => {})
+  }, [user])
 
   return (
     <div className="screen">
-      <TopBar right={<button className="icon-btn" onClick={() => nav('/profile')}>⚙</button>} />
+      <TopBar right={
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="icon-btn" style={{ position: 'relative' }} onClick={() => nav('/friends')}>
+            👥{pending > 0 && <span className="nbadge">{pending}</span>}
+          </button>
+          <button className="icon-btn" onClick={() => nav('/profile')}>⚙</button>
+        </div>
+      } />
 
       <div className="hero">
         <Board className="board" size={190} />

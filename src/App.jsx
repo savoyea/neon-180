@@ -1,9 +1,11 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './lib/auth.jsx'
 import { GameProvider } from './game/GameContext.jsx'
+import Presence from './lib/presence.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import GameFX from './components/game/GameFX.jsx'
 import WinModal from './components/game/WinModal.jsx'
+import Friends from './screens/Friends.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -29,18 +31,20 @@ function Protected({ children }) {
   return children
 }
 
-const NAV_ROUTES = ['/', '/play', '/stats', '/history', '/profile']
+const NAV_ROUTES = ['/', '/play', '/friends', '/stats', '/history', '/profile']
 
 function AuthedApp() {
   const location = useLocation()
   const showNav = NAV_ROUTES.includes(location.pathname)
   return (
     <GameProvider>
+      <Presence />
       <div id="app-root">
         <Routes>
           <Route path="/" element={<Protected><Home /></Protected>} />
           <Route path="/play" element={<Protected><Play /></Protected>} />
           <Route path="/game" element={<Protected><Game /></Protected>} />
+          <Route path="/friends" element={<Protected><Friends /></Protected>} />
           <Route path="/stats" element={<Protected><Stats /></Protected>} />
           <Route path="/history" element={<Protected><History /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />
