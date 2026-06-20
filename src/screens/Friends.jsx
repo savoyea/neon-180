@@ -91,6 +91,7 @@ export default function Friends() {
   }
 
   const pending = data.incoming.length
+  const online = data.friends.filter((e) => computeStatus(e.profile) !== 'offline')
 
   return (
     <div className="screen">
@@ -98,6 +99,9 @@ export default function Friends() {
 
       <div className="tabs">
         <button className={tab === 'amis' ? 'on' : ''} onClick={() => setTab('amis')}>Amis</button>
+        <button className={tab === 'en-ligne' ? 'on' : ''} onClick={() => setTab('en-ligne')}>
+          En ligne{online.length > 0 && <span className="tab-badge" style={{ background: 'var(--neon-dim)', color: '#04140A' }}>{online.length}</span>}
+        </button>
         <button className={tab === 'demandes' ? 'on' : ''} onClick={() => setTab('demandes')}>
           Demandes
           {pending > 0 && <span className="tab-badge">{pending}</span>}
@@ -117,6 +121,18 @@ export default function Friends() {
                 <button className="btn sm primary" disabled={busy} onClick={() => { setInviteMode('x01'); setInvite(e.profile) }}>🎯</button>
                 <button className="btn sm danger" disabled={busy} onClick={() => act(() => removeFriendship(e.friendshipId))}>✕</button>
               </div>
+            </div>
+          ))
+      )}
+
+      {tab === 'en-ligne' && (
+        online.length === 0
+          ? <div className="empty"><div className="big">🌙</div><p>Aucun ami en ligne pour l’instant.</p></div>
+          : online.map((e) => (
+            <div className="row" key={e.friendshipId}>
+              <Avatar name={e.profile.username} />
+              <div className="meta"><b>{e.profile.username}</b><StatusDot profile={e.profile} /></div>
+              <button className="btn sm primary" disabled={busy} onClick={() => { setInviteMode('x01'); setInvite(e.profile) }}>🎯 Jouer</button>
             </div>
           ))
       )}

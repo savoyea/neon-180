@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { PRICING, PREMIUM_PERKS, isPremium } from '../lib/premium.js'
 
 export default function Dart180Plus() {
   const { profile } = useAuth()
+  const nav = useNavigate()
   const [plan, setPlan] = useState('yearly')
   const premium = isPremium(profile)
 
@@ -49,6 +51,7 @@ export default function Dart180Plus() {
         </div>
       ))}
 
+      <button className="btn ghost" style={{ marginTop: 16 }} onClick={() => nav('/plans')}>📋 Comparer les plans en détail ›</button>
       <p className="muted" style={{ textAlign: 'center', fontSize: 12, margin: '18px 6px' }}>
         La version gratuite reste complète : jouer, scorer, amis, parties en ligne, ligues.
       </p>

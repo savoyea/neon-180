@@ -6,18 +6,19 @@ import Board from '../components/Board.jsx'
 import { MODE_LIST } from '../game/modes.js'
 import { getMode } from '../game/engine/registry.js'
 import { getFriendships } from '../lib/friends.js'
-import { getActiveMatches } from '../lib/matches.js'
+import { getActiveMatches, getIncomingInvites } from '../lib/matches.js'
 
 export default function Home() {
   const nav = useNavigate()
   const { profile, user } = useAuth()
   const name = profile?.username || 'Joueur'
-  const [pending, setPending] = useState(0)
+  const [notifs, setNotifs] = useState(0)
   const [active, setActive] = useState([])
 
   useEffect(() => {
     if (!user?.id) return
-    getFriendships(user.id).then((d) => setPending(d.incoming.length)).catch(() => {})
+    Promise.all([getFriendships(user.id), getIncomingInvites(user.id)])
+      .then(([f, inv]) => setNotifs(f.incoming.length + inv.length)).catch(() => {})
     getActiveMatches(user.id).then(setActive).catch(() => {})
   }, [user])
 
@@ -25,9 +26,10 @@ export default function Home() {
     <div className="screen">
       <TopBar right={
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="icon-btn" style={{ position: 'relative' }} onClick={() => nav('/friends')}>
-            👥{pending > 0 && <span className="nbadge">{pending}</span>}
+          <button className="icon-btn" style={{ position: 'relative' }} onClick={() => nav('/notifications')}>
+            🔔{notifs > 0 && <span className="nbadge">{notifs}</span>}
           </button>
+          <button className="icon-btn" onClick={() => nav('/friends')}>👥</button>
           <button className="icon-btn" onClick={() => nav('/profile')}>⚙</button>
         </div>
       } />
