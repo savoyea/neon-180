@@ -49,6 +49,13 @@ export function GameProvider({ children }) {
     return np
   }, [roster])
 
+  const saveRecord = useCallback((record) => {
+    setHistory((h) => {
+      if (h.some((r) => r.id === record.id)) return h
+      const next = [record, ...h].slice(0, 200); save(HISTORY_KEY, next); return next
+    })
+  }, [])
+
   const finishGame = useCallback((g) => {
     const record = buildRecord(g)
     setHistory((h) => { const next = [record, ...h].slice(0, 200); save(HISTORY_KEY, next); return next })
@@ -117,7 +124,7 @@ export function GameProvider({ children }) {
   const value = {
     roster, history, game, fx, winData,
     addPlayer, startGame, throwDart, passTurn, undoDart, dispatchAction,
-    quitGame, dismissWin, clearFlash, clearToast,
+    quitGame, dismissWin, clearFlash, clearToast, saveRecord,
   }
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
 }

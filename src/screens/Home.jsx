@@ -4,17 +4,21 @@ import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
 import Board from '../components/Board.jsx'
 import { MODE_LIST } from '../game/modes.js'
+import { getMode } from '../game/engine/registry.js'
 import { getFriendships } from '../lib/friends.js'
+import { getActiveMatches } from '../lib/matches.js'
 
 export default function Home() {
   const nav = useNavigate()
   const { profile, user } = useAuth()
   const name = profile?.username || 'Joueur'
   const [pending, setPending] = useState(0)
+  const [active, setActive] = useState([])
 
   useEffect(() => {
     if (!user?.id) return
     getFriendships(user.id).then((d) => setPending(d.incoming.length)).catch(() => {})
+    getActiveMatches(user.id).then(setActive).catch(() => {})
   }, [user])
 
   return (
@@ -37,6 +41,22 @@ export default function Home() {
           Nouvelle partie ›
         </button>
       </div>
+
+      {active.length > 0 && (
+        <>
+          <div className="section-title"><h2>Parties en cours</h2><span className="hint">à distance</span></div>
+          {active.map((m) => {
+            const opp = m.host_id === user.id ? m.guest : m.host
+            return (
+              <button key={m.id} className="row" style={{ width: '100%', textAlign: 'left', cursor: 'pointer' }} onClick={() => nav('/match/' + m.id)}>
+                <div className="avatar">{(opp?.username || '?').slice(0, 2).toUpperCase()}</div>
+                <div className="meta"><b>{getMode(m.mode)?.name || m.mode}</b><small>contre {opp?.username || 'adversaire'}</small></div>
+                <div className="val" style={{ color: 'var(--neon)', fontSize: 14 }}>Reprendre ›</div>
+              </button>
+            )
+          })}
+        </>
+      )}
 
       <div className="section-title"><h2>Modes de jeu</h2><span className="hint">{MODE_LIST.length} disponibles</span></div>
       <div className="mode-grid">

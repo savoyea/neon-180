@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { supabase, isConfigured } from '../lib/supabase.js'
@@ -7,6 +8,8 @@ import {
   sendRequest, acceptRequest, removeFriendship,
   computeStatus, STATUS_LABEL,
 } from '../lib/friends.js'
+import { createInvite, ONLINE_MODES } from '../lib/matches.js'
+import { getMode } from '../game/engine/registry.js'
 
 function StatusDot({ profile }) {
   const s = computeStatus(profile)
@@ -23,8 +26,11 @@ function Avatar({ name }) { return <div className="avatar">{(name || '?').slice(
 
 export default function Friends() {
   const { user } = useAuth()
+  const nav = useNavigate()
   const myId = user?.id
   const [tab, setTab] = useState('amis')
+  const [invite, setInvite] = useState(null) // { profile } cible d'invitation
+  const [inviteMode, setInviteMode] = useState('x01')
   const [data, setData] = useState({ friends: [], incoming: [], outgoing: [] })
   const [term, setTerm] = useState('')
   const [results, setResults] = useState([])
@@ -107,7 +113,10 @@ export default function Friends() {
             <div className="row" key={e.friendshipId}>
               <Avatar name={e.profile.username} />
               <div className="meta"><b>{e.profile.username}</b><StatusDot profile={e.profile} /></div>
-              <button className="btn sm danger" disabled={busy} onClick={() => act(() => removeFriendship(e.friendshipId))}>Retirer</button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button className="btn sm primary" disabled={busy} onClick={() => { setInviteMode('x01'); setInvite(e.profile) }}>🎯</button>
+                <button className="btn sm danger" disabled={busy} onClick={() => act(() => removeFriendship(e.friendshipId))}>✕</button>
+              </div>
             </div>
           ))
       )}
@@ -158,6 +167,31 @@ export default function Friends() {
           })}
           {term.trim() && results.length === 0 && <div className="empty" style={{ padding: 20 }}><p>Aucun joueur trouvé.</p></div>}
         </>
+      )}
+
+      {invite && (
+        <div className="modal-back" onClick={() => setInvite(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ color: 'var(--text)', fontSize: 18 }}>Inviter {invite.username}</h2>
+            <p className="muted" style={{ fontSize: 13, margin: '6px 0 16px' }}>Choisis le mode de la partie en ligne :</p>
+            <div className="chips" style={{ justifyContent: 'center', marginBottom: 18 }}>
+              {ONLINE_MODES.map((k) => {
+                const m = getMode(k)
+                return <button key={k} className={'chip' + (k === inviteMode ? ' on' : '')} onClick={() => setInviteMode(k)}>{m.ico} {m.name}</button>
+              })}
+            </div>
+            <div className="modal-actions">
+              <button className="btn ghost" onClick={() => setInvite(null)}>Annuler</button>
+              <button className="btn primary" disabled={busy} onClick={async () => {
+                setBusy(true)
+                try {
+                  const m = await createInvite(myId, invite.id, inviteMode, getMode(inviteMode).defaultOptions)
+                  setInvite(null); nav('/match/' + m.id)
+                } catch (e) { setBusy(false) }
+              }}>Envoyer l’invitation ›</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
