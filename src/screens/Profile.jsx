@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
+import { BADGES, earnedBadges } from '../game/badges.js'
 
 export default function Profile() {
   const nav = useNavigate()
@@ -10,6 +11,7 @@ export default function Profile() {
   const xp = profile?.xp ?? 0
   const xpNext = level * 1000
   const pct = Math.min(100, Math.round((xp / xpNext) * 100))
+  const earned = earnedBadges(profile)
 
   async function logout() {
     await signOut()
@@ -40,8 +42,15 @@ export default function Profile() {
         <div className="stat-cell"><b>{level}</b><small>Niveau</small></div>
       </div>
 
-      <div className="section-title"><h2>Badges</h2><span className="hint">À débloquer</span></div>
-      <div className="empty"><div className="big">🏅</div><p>Joue pour débloquer tes premiers badges.</p></div>
+      <div className="section-title"><h2>Badges</h2><span className="hint">{earned.length}/{BADGES.length}</span></div>
+      {earned.length === 0
+        ? <div className="empty" style={{ padding: 20 }}><div className="big">🏅</div><p>Joue en ligne pour débloquer tes premiers badges.</p></div>
+        : <div className="badge-grid">
+            {earned.slice(0, 8).map((b) => (
+              <div key={b.id} className={'badge ' + b.tier} title={b.desc}><span className="b-emoji">{b.emoji}</span><small>{b.name}</small></div>
+            ))}
+          </div>}
+      <button className="btn ghost" style={{ marginTop: 12 }} onClick={() => nav('/badges')}>Voir tous les badges ›</button>
 
       <button className="btn danger" style={{ marginTop: 22 }} onClick={logout}>Déconnexion</button>
     </div>

@@ -366,6 +366,44 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
 .celebration .cel-text{font-family:'Oswald';font-weight:600;font-size:17px;line-height:1.25;margin-top:6px;color:#fff}
 .celebration .cel-league{font-size:12px;color:var(--neon-dim);margin-top:6px;letter-spacing:1px;font-family:'Oswald'}
 
+/* badges */
+.badge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.badge{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:14px;
+  border:1px solid var(--line-strong);background:linear-gradient(180deg,var(--surface2),var(--bg2));text-align:center}
+.badge .b-emoji{font-size:26px;filter:drop-shadow(0 0 8px rgba(57,255,106,.4))}
+.badge small{font-size:10px;color:var(--muted);line-height:1.1}
+.badge.rare{border-color:rgba(63,224,255,.5);box-shadow:0 0 14px rgba(63,224,255,.15)}
+.badge.elite{border-color:rgba(255,210,63,.55);box-shadow:0 0 16px rgba(255,210,63,.2)}
+.badge.locked{filter:grayscale(1);opacity:.4;border-color:var(--line)}
+.badge-row{display:flex;align-items:center;gap:13px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.badge-row .badge{width:58px;height:58px;flex:none;padding:0;justify-content:center}
+.badge-row .badge .b-emoji{font-size:28px}
+.badge-row .meta{flex:1;min-width:0}
+.badge-row .meta b{font-family:'Oswald';font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+.badge-row .meta small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.badge-row.on .meta b{color:#fff}
+.tier-tag{font-family:'Oswald';font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:1px 6px;border-radius:5px;
+  border:1px solid var(--line-strong);color:var(--muted)}
+.tier-tag.rare{color:var(--cyan);border-color:rgba(63,224,255,.5)}
+.tier-tag.elite{color:var(--amber);border-color:rgba(255,210,63,.5)}
+.badge-prog{position:relative;height:14px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);margin-top:7px;overflow:hidden}
+.badge-prog > i{display:block;height:100%;background:linear-gradient(90deg,var(--neon-dim),var(--neon))}
+.badge-prog > span{position:absolute;inset:0;display:grid;place-items:center;font-size:9px;font-weight:700;color:var(--text)}
+.badge-check{font-family:'Oswald';font-weight:700;color:var(--neon);font-size:18px}
+
+/* emotes en partie */
+.emote-bar{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+.emote-btn{width:46px;height:46px;border-radius:12px;border:1px solid var(--line-strong);background:var(--surface);
+  font-size:24px;display:grid;place-items:center}
+.emote-btn:active{background:var(--surface2)}
+.emote-btn:disabled{opacity:.3}
+.emote-cooldown{text-align:center;font-size:12px;color:var(--amber);font-family:'Oswald';letter-spacing:1px;margin-bottom:8px}
+.emote-fly{position:fixed;inset:0;z-index:36;display:grid;place-items:center;pointer-events:none}
+.emote-fly .e{font-size:130px;animation:emotePop 1.6s ease forwards;filter:drop-shadow(0 0 30px rgba(0,0,0,.6))}
+@keyframes emotePop{0%{transform:scale(.2) rotate(-12deg);opacity:0}
+  20%{transform:scale(1.15) rotate(6deg);opacity:1}40%{transform:scale(1) rotate(0)}
+  80%{opacity:1}100%{transform:scale(1.1) translateY(-30px);opacity:0}}
+
 /* home quick links */
 .quick-links{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
 .quick-link{display:flex;align-items:center;gap:10px;padding:16px 14px;border:1px solid var(--line);

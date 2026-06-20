@@ -14,6 +14,9 @@ import AtwBoard from '../components/game/AtwBoard.jsx'
 import DartPad from '../components/game/DartPad.jsx'
 
 const fxKey = () => Date.now() + Math.random()
+const EMOTES = ['😈', '🔥', '💪', '😂', '🎯', '😮', '👏', '🥶']
+const EMOTE_PREFIX = '::emote::'
+const EMOTE_COOLDOWN = 120 // secondes (offre gratuite)
 
 export default function OnlineGame() {
   const { id } = useParams()
@@ -31,6 +34,8 @@ export default function OnlineGame() {
   const [unread, setUnread] = useState(0)
   const [notif, setNotif] = useState(null)
   const [celeb, setCeleb] = useState(null)
+  const [emoteFly, setEmoteFly] = useState(null)
+  const [cooldown, setCooldown] = useState(0)
 
   const matchRef = useRef(null)
   const timers = useRef([])
@@ -42,6 +47,16 @@ export default function OnlineGame() {
   useEffect(() => { chatOpenRef.current = chatOpen; if (chatOpen) setUnread(0) }, [chatOpen])
   // la petite notif s'efface seule
   useEffect(() => { if (!notif) return; const t = setTimeout(() => setNotif(null), 3200); return () => clearTimeout(t) }, [notif])
+  // l'emote géante s'efface seule
+  useEffect(() => { if (!emoteFly) return; const t = setTimeout(() => setEmoteFly(null), 1600); return () => clearTimeout(t) }, [emoteFly])
+  // décompte du cooldown des emotes
+  useEffect(() => { const t = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000); return () => clearInterval(t) }, [])
+
+  function sendEmote(e) {
+    if (cooldown > 0) return
+    setCooldown(EMOTE_COOLDOWN)
+    sendMessage(id, myId, EMOTE_PREFIX + e).catch(() => {})
+  }
 
   const setMatchBoth = (updater) => setMatch((prev) => { const next = typeof updater === 'function' ? updater(prev) : updater; matchRef.current = next; return next })
 
@@ -55,10 +70,12 @@ export default function OnlineGame() {
         (p) => setMatchBoth((prev) => ({ ...prev, ...p.new })))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_messages', filter: 'match_id=eq.' + id },
         (p) => {
+          const body = p.new.body || ''
+          if (body.startsWith(EMOTE_PREFIX)) { setEmoteFly({ e: body.slice(EMOTE_PREFIX.length), key: Date.now() }); return }
           setMessages((m) => (m.some((x) => x.id === p.new.id) ? m : [...m, p.new]))
           if (p.new.sender_id !== myId && !chatOpenRef.current) {
             setUnread((u) => u + 1)
-            setNotif({ text: p.new.body, key: Date.now() })
+            setNotif({ text: body, key: Date.now() })
           }
         })
       .subscribe()
@@ -182,6 +199,10 @@ export default function OnlineGame() {
       {chatOpen && (
         <div className="chat-sheet">
           <div className="chat-head"><b>Discussion</b><button className="icon-btn" onClick={() => setChatOpen(false)}>✕</button></div>
+          <div className="emote-bar">
+            {EMOTES.map((e) => <button key={e} className="emote-btn" disabled={cooldown > 0} onClick={() => sendEmote(e)}>{e}</button>)}
+          </div>
+          {cooldown > 0 && <div className="emote-cooldown">⏱ Emote dispo dans {cooldown}s · illimité avec Dart-180+</div>}
           <div className="chat-quick">
             {['Bien joué ! 🎯', 'Quel tir ! 🔥', 'Presque… 😂', 'À moi 💪', 'GG 🤝'].map((q) => (
               <button key={q} className="chip sm" onClick={() => sendMessage(id, myId, q).catch(() => {})}>{q}</button>
@@ -206,6 +227,8 @@ export default function OnlineGame() {
           <span className="cn-body">{notif.text}</span>
         </button>
       )}
+
+      {emoteFly && <div className="emote-fly"><div className="e" key={emoteFly.key}>{emoteFly.e}</div></div>}
 
       {flash && <div className="flash show"><div className={'txt' + (flash === 'BUST' ? ' bust' : '')}>{flash}</div></div>}
 
