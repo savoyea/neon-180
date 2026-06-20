@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { isConfigured } from '../lib/supabase.js'
+import { supabase, isConfigured } from '../lib/supabase.js'
 import {
   searchProfiles, getFriendships, relationMap,
   sendRequest, acceptRequest, removeFriendship,
@@ -39,6 +39,26 @@ export default function Friends() {
 
   useEffect(() => { refresh() }, [refresh])
 
+  // Realtime : rafraîchit dès qu'une de mes relations change (ex : ma demande
+  // vient d'être acceptée par l'autre joueur) — sans recharger la page.
+  useEffect(() => {
+    if (!isConfigured || !myId) return
+    const ch = supabase
+      .channel('friendships:' + myId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => refresh())
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [myId, refresh])
+
+  // Envoi de demande avec retour visuel immédiat (bouton → « En attente »).
+  async function add(pid) {
+    setRelations((r) => ({ ...r, [pid]: 'outgoing' }))
+    setBusy(true)
+    try { await sendRequest(pid, myId); await refresh() }
+    catch (e) { setRelations((r) => ({ ...r, [pid]: undefined })) }
+    finally { setBusy(false) }
+  }
+
   // recherche debouncée
   useEffect(() => {
     if (tab !== 'recherche') return
@@ -73,7 +93,9 @@ export default function Friends() {
       <div className="tabs">
         <button className={tab === 'amis' ? 'on' : ''} onClick={() => setTab('amis')}>Amis</button>
         <button className={tab === 'demandes' ? 'on' : ''} onClick={() => setTab('demandes')}>
-          Demandes{pending > 0 && <span className="tab-badge">{pending}</span>}
+          Demandes
+          {pending > 0 && <span className="tab-badge">{pending}</span>}
+          {pending === 0 && data.outgoing.length > 0 && <span className="tab-dot" />}
         </button>
         <button className={tab === 'recherche' ? 'on' : ''} onClick={() => setTab('recherche')}>Rechercher</button>
       </div>
@@ -130,7 +152,7 @@ export default function Friends() {
                 {rel === 'friend' ? <span className="muted" style={{ fontSize: 13 }}>✓ Ami</span>
                   : rel === 'outgoing' ? <span className="muted" style={{ fontSize: 13 }}>En attente</span>
                   : rel === 'incoming' ? <span className="muted" style={{ fontSize: 13 }}>Te suit</span>
-                  : <button className="btn sm primary" disabled={busy} onClick={() => act(() => sendRequest(p.id, myId))}>Ajouter</button>}
+                  : <button className="btn sm primary" disabled={busy} onClick={() => add(p.id)}>Ajouter</button>}
               </div>
             )
           })}
