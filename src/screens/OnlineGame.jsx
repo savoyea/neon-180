@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth.jsx'
 import { useGame } from '../game/GameContext.jsx'
 import { supabase } from '../lib/supabase.js'
 import { getMatch, getMessages, sendMessage, persistMatch } from '../lib/matches.js'
+import { getWinnerCelebration } from '../lib/leagues.js'
 import { applyDart, endTurn as engineEndTurn, buildRecord } from '../game/engine/core.js'
 import { getMode } from '../game/engine/registry.js'
 import TopBar from '../components/TopBar.jsx'
@@ -29,6 +30,7 @@ export default function OnlineGame() {
   const [flash, setFlash] = useState(null)
   const [unread, setUnread] = useState(0)
   const [notif, setNotif] = useState(null)
+  const [celeb, setCeleb] = useState(null)
 
   const matchRef = useRef(null)
   const timers = useRef([])
@@ -77,13 +79,17 @@ export default function OnlineGame() {
     }
   }, [g?.fx])
 
-  // Fin de partie → enregistrement local (une seule fois)
+  // Fin de partie → historique + stats serveur + phrase de célébration (perdant)
   useEffect(() => {
     if (match?.status === 'finished' && g && !savedRef.current) {
       savedRef.current = true
       saveRecord(buildRecord(g))
+      supabase.rpc('apply_match_result', { p_match: id }).catch(() => {})
+      if (g.winner && g.winner !== myId) {
+        getWinnerCelebration(g.winner).then((c) => c && setCeleb(c)).catch(() => {})
+      }
     }
-  }, [match?.status, g, saveRecord])
+  }, [match?.status, g, saveRecord, id, myId])
 
   const runEndTurn = useCallback((state) => {
     const { game: g2, result: r } = engineEndTurn(state)
@@ -209,6 +215,13 @@ export default function OnlineGame() {
             <div className="trophy">🏆</div>
             <h2>Vainqueur</h2>
             <div className="winner" style={{ color: winner.color }}>{winner.name}</div>
+            {celeb && (
+              <div className="celebration">
+                <div className="cel-emoji">{celeb.emoji}</div>
+                <div className="cel-text">{celeb.celebration}</div>
+                <div className="cel-league">— {celeb.name}</div>
+              </div>
+            )}
             <div className="standings">
               {ranked.map((pl, i) => (
                 <div className="row" key={pl.id}>

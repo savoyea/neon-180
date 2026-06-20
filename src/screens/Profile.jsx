@@ -30,14 +30,14 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="section-title"><h2>Statistiques</h2><span className="hint">Cumul</span></div>
+      <div className="section-title"><h2>Statistiques</h2><span className="hint">Parties en ligne</span></div>
       <div className="stat-grid">
-        <div className="stat-cell"><b>0</b><small>Parties</small></div>
-        <div className="stat-cell"><b>0</b><small>Victoires</small></div>
-        <div className="stat-cell"><b>0%</b><small>Winrate</small></div>
-        <div className="stat-cell"><b>0.0</b><small>Moyenne</small></div>
-        <div className="stat-cell"><b>0</b><small>180</small></div>
-        <div className="stat-cell"><b>0</b><small>Meilleur finish</small></div>
+        <div className="stat-cell"><b>{profile?.games_played ?? 0}</b><small>Parties</small></div>
+        <div className="stat-cell"><b>{profile?.wins ?? 0}</b><small>Victoires</small></div>
+        <div className="stat-cell"><b>{profile?.games_played ? Math.round((profile.wins / profile.games_played) * 100) : 0}%</b><small>Winrate</small></div>
+        <div className="stat-cell"><b>{profile?.total_180 ?? 0}</b><small>180</small></div>
+        <div className="stat-cell"><b>{profile?.best_checkout || '—'}</b><small>Meilleur finish</small></div>
+        <div className="stat-cell"><b>{level}</b><small>Niveau</small></div>
       </div>
 
       <div className="section-title"><h2>Badges</h2><span className="hint">À débloquer</span></div>

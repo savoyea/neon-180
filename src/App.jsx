@@ -8,6 +8,9 @@ import WinModal from './components/game/WinModal.jsx'
 import InviteWatcher from './components/InviteWatcher.jsx'
 import Friends from './screens/Friends.jsx'
 import OnlineGame from './screens/OnlineGame.jsx'
+import Leagues from './screens/Leagues.jsx'
+import LeagueDetail from './screens/LeagueDetail.jsx'
+import Rankings from './screens/Rankings.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -33,7 +36,7 @@ function Protected({ children }) {
   return children
 }
 
-const NAV_ROUTES = ['/', '/play', '/friends', '/stats', '/history', '/profile']
+const NAV_ROUTES = ['/', '/play', '/friends', '/leagues', '/rankings', '/stats', '/history', '/profile']
 
 function AuthedApp() {
   const location = useLocation()
@@ -49,6 +52,9 @@ function AuthedApp() {
           <Route path="/game" element={<Protected><Game /></Protected>} />
           <Route path="/friends" element={<Protected><Friends /></Protected>} />
           <Route path="/match/:id" element={<Protected><OnlineGame /></Protected>} />
+          <Route path="/leagues" element={<Protected><Leagues /></Protected>} />
+          <Route path="/leagues/:id" element={<Protected><LeagueDetail /></Protected>} />
+          <Route path="/rankings" element={<Protected><Rankings /></Protected>} />
           <Route path="/stats" element={<Protected><Stats /></Protected>} />
           <Route path="/history" element={<Protected><History /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />

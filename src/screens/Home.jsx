@@ -58,6 +58,11 @@ export default function Home() {
         </>
       )}
 
+      <div className="quick-links">
+        <button className="quick-link" onClick={() => nav('/leagues')}><span className="ql-ic">🛡️</span>Ligues</button>
+        <button className="quick-link" onClick={() => nav('/rankings')}><span className="ql-ic">🏆</span>Classement</button>
+      </div>
+
       <div className="section-title"><h2>Modes de jeu</h2><span className="hint">{MODE_LIST.length} disponibles</span></div>
       <div className="mode-grid">
         {MODE_LIST.map((m) => (
