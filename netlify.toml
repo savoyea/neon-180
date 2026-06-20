@@ -1,9 +1,0 @@
-# Configuration Netlify — site statique (aucune compilation nécessaire)
-[build]
-  publish = "."
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"

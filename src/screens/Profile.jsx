@@ -1,0 +1,49 @@
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../lib/auth.jsx'
+import TopBar from '../components/TopBar.jsx'
+
+export default function Profile() {
+  const nav = useNavigate()
+  const { profile, signOut } = useAuth()
+  const name = profile?.username || 'Joueur'
+  const level = profile?.level ?? 1
+  const xp = profile?.xp ?? 0
+  const xpNext = level * 1000
+  const pct = Math.min(100, Math.round((xp / xpNext) * 100))
+
+  async function logout() {
+    await signOut()
+    nav('/welcome', { replace: true })
+  }
+
+  return (
+    <div className="screen">
+      <TopBar title="Profil" />
+
+      <div className="card glow">
+        <div className="profile-head">
+          <div className="profile-avatar">{name.slice(0, 2).toUpperCase()}</div>
+          <div className="profile-name">{name}</div>
+          <span className="level-pill">Niveau {level} · Le Tireur</span>
+          <div className="xpbar"><i style={{ width: pct + '%' }} /></div>
+          <small className="muted">{xp} / {xpNext} XP</small>
+        </div>
+      </div>
+
+      <div className="section-title"><h2>Statistiques</h2><span className="hint">Cumul</span></div>
+      <div className="stat-grid">
+        <div className="stat-cell"><b>0</b><small>Parties</small></div>
+        <div className="stat-cell"><b>0</b><small>Victoires</small></div>
+        <div className="stat-cell"><b>0%</b><small>Winrate</small></div>
+        <div className="stat-cell"><b>0.0</b><small>Moyenne</small></div>
+        <div className="stat-cell"><b>0</b><small>180</small></div>
+        <div className="stat-cell"><b>0</b><small>Meilleur finish</small></div>
+      </div>
+
+      <div className="section-title"><h2>Badges</h2><span className="hint">À débloquer</span></div>
+      <div className="empty"><div className="big">🏅</div><p>Joue pour débloquer tes premiers badges.</p></div>
+
+      <button className="btn danger" style={{ marginTop: 22 }} onClick={logout}>Déconnexion</button>
+    </div>
+  )
+}
