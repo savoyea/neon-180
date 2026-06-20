@@ -27,11 +27,19 @@ export default function OnlineGame() {
   const [draft, setDraft] = useState('')
   const [err, setErr] = useState(null)
   const [flash, setFlash] = useState(null)
+  const [unread, setUnread] = useState(0)
+  const [notif, setNotif] = useState(null)
 
   const matchRef = useRef(null)
   const timers = useRef([])
   const savedRef = useRef(false)
   const lastFx = useRef(null)
+  const chatOpenRef = useRef(false)
+
+  // garde une réf à jour de l'état du chat + remet le compteur à 0 à l'ouverture
+  useEffect(() => { chatOpenRef.current = chatOpen; if (chatOpen) setUnread(0) }, [chatOpen])
+  // la petite notif s'efface seule
+  useEffect(() => { if (!notif) return; const t = setTimeout(() => setNotif(null), 3200); return () => clearTimeout(t) }, [notif])
 
   const setMatchBoth = (updater) => setMatch((prev) => { const next = typeof updater === 'function' ? updater(prev) : updater; matchRef.current = next; return next })
 
@@ -44,7 +52,13 @@ export default function OnlineGame() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: 'id=eq.' + id },
         (p) => setMatchBoth((prev) => ({ ...prev, ...p.new })))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_messages', filter: 'match_id=eq.' + id },
-        (p) => setMessages((m) => (m.some((x) => x.id === p.new.id) ? m : [...m, p.new])))
+        (p) => {
+          setMessages((m) => (m.some((x) => x.id === p.new.id) ? m : [...m, p.new]))
+          if (p.new.sender_id !== myId && !chatOpenRef.current) {
+            setUnread((u) => u + 1)
+            setNotif({ text: p.new.body, key: Date.now() })
+          }
+        })
       .subscribe()
     return () => { active = false; supabase.removeChannel(ch); timers.current.forEach(clearTimeout); timers.current = [] }
   }, [id])
@@ -130,7 +144,11 @@ export default function OnlineGame() {
 
   return (
     <div className="screen playing">
-      <TopBar back={quit} right={<button className="icon-btn" onClick={() => setChatOpen((o) => !o)}>💬</button>} />
+      <TopBar back={quit} right={
+        <button className="icon-btn" style={{ position: 'relative' }} onClick={() => setChatOpen((o) => !o)}>
+          💬{unread > 0 && <span className="nbadge">{unread}</span>}
+        </button>
+      } />
       <PlayersStrip game={g} mode={mode} />
 
       <div className="game-mid">
@@ -174,6 +192,13 @@ export default function OnlineGame() {
             <button className="btn sm primary" style={{ flex: 'none' }} onClick={send}>›</button>
           </div>
         </div>
+      )}
+
+      {notif && !chatOpen && (
+        <button className="chat-notif" onClick={() => setChatOpen(true)}>
+          <span className="cn-ic">💬</span>
+          <span className="cn-body">{notif.text}</span>
+        </button>
       )}
 
       {flash && <div className="flash show"><div className={'txt' + (flash === 'BUST' ? ' bust' : '')}>{flash}</div></div>}
