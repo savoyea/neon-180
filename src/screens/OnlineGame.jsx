@@ -22,9 +22,10 @@ const EMOTE_COOLDOWN = 120 // secondes (offre gratuite)
 export default function OnlineGame() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { saveRecord } = useGame()
   const myId = user?.id
+  const premium = Boolean(profile?.is_premium)
 
   const [match, setMatch] = useState(null)
   const [messages, setMessages] = useState([])
@@ -55,7 +56,7 @@ export default function OnlineGame() {
 
   function sendEmote(e) {
     if (cooldown > 0) return
-    setCooldown(EMOTE_COOLDOWN)
+    if (!premium) setCooldown(EMOTE_COOLDOWN) // illimité avec Dart-180+
     sendMessage(id, myId, EMOTE_PREFIX + e).catch(() => {})
   }
 

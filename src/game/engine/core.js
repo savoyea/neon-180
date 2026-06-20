@@ -43,6 +43,9 @@ export function applyDart(game, seg, mult) {
   const dart = makeDart(seg, mult)
   g.turn.darts.push(dart)
   const p = g.players[g.turn.pi]
+  // Distribution des impacts (carte thermique premium) — clé = label du dard.
+  p.dartHits = p.dartHits || {}
+  p.dartHits[dart.label] = (p.dartHits[dart.label] || 0) + 1
   const result = mode.applyDart(g, p, dart) || {}
 
   // Décision d'orchestration (timers gérés par l'appelant)
@@ -102,6 +105,7 @@ export function buildRecord(game) {
       sub: mode.resultSub(g, p),
       s180: p.s180 || 0, tons: p.tons || 0, bestCheckout: p.bestCheckout || 0,
       avg: g.mode === 'x01' && p.dartsThrown ? +(p.scored / p.dartsThrown * 3).toFixed(1) : 0,
+      dartHits: p.dartHits || {},
     })),
   }
 }

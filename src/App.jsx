@@ -12,6 +12,8 @@ import Leagues from './screens/Leagues.jsx'
 import LeagueDetail from './screens/LeagueDetail.jsx'
 import Rankings from './screens/Rankings.jsx'
 import Badges from './screens/Badges.jsx'
+import Dart180Plus from './screens/Dart180Plus.jsx'
+import AdvancedStats from './screens/AdvancedStats.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -57,6 +59,8 @@ function AuthedApp() {
           <Route path="/leagues/:id" element={<Protected><LeagueDetail /></Protected>} />
           <Route path="/rankings" element={<Protected><Rankings /></Protected>} />
           <Route path="/badges" element={<Protected><Badges /></Protected>} />
+          <Route path="/premium" element={<Protected><Dart180Plus /></Protected>} />
+          <Route path="/advanced-stats" element={<Protected><AdvancedStats /></Protected>} />
           <Route path="/stats" element={<Protected><Stats /></Protected>} />
           <Route path="/history" element={<Protected><History /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />

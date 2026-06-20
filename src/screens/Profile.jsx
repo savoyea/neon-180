@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
 import { BADGES, earnedBadges } from '../game/badges.js'
+import { isPremium } from '../lib/premium.js'
 
 export default function Profile() {
   const nav = useNavigate()
@@ -12,6 +13,7 @@ export default function Profile() {
   const xpNext = level * 1000
   const pct = Math.min(100, Math.round((xp / xpNext) * 100))
   const earned = earnedBadges(profile)
+  const premium = isPremium(profile)
 
   async function logout() {
     await signOut()
@@ -25,12 +27,16 @@ export default function Profile() {
       <div className="card glow">
         <div className="profile-head">
           <div className="profile-avatar">{name.slice(0, 2).toUpperCase()}</div>
-          <div className="profile-name">{name}</div>
+          <div className="profile-name">{name}{premium && <span className="premium-tag">⭐ 180+</span>}</div>
           <span className="level-pill">Niveau {level} · Le Tireur</span>
           <div className="xpbar"><i style={{ width: pct + '%' }} /></div>
           <small className="muted">{xp} / {xpNext} XP</small>
         </div>
       </div>
+
+      {!premium && (
+        <button className="btn primary" style={{ marginTop: 14 }} onClick={() => nav('/premium')}>⭐ Passer à Dart-180+</button>
+      )}
 
       <div className="section-title"><h2>Statistiques</h2><span className="hint">Parties en ligne</span></div>
       <div className="stat-grid">
@@ -41,6 +47,9 @@ export default function Profile() {
         <div className="stat-cell"><b>{profile?.best_checkout || '—'}</b><small>Meilleur finish</small></div>
         <div className="stat-cell"><b>{level}</b><small>Niveau</small></div>
       </div>
+      <button className="btn ghost" style={{ marginTop: 10 }} onClick={() => nav('/advanced-stats')}>
+        📊 Stats avancées {premium ? '' : '⭐'} ›
+      </button>
 
       <div className="section-title"><h2>Badges</h2><span className="hint">{earned.length}/{BADGES.length}</span></div>
       {earned.length === 0
