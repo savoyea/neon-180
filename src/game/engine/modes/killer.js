@@ -23,7 +23,7 @@ export default {
       { value: 'custom', label: '✍️ Choisis', hint: 'Attribue un numéro à chaque joueur.' },
     ] },
   ],
-  info: 'Tout le monde démarre à 0. Mets 3 marques dans ton numéro pour devenir Tueur ☠ (score 3). En tant que tueur, vise les numéros adverses pour faire baisser leur score : à −2, le joueur est éliminé. Dernier survivant gagne. On ne peut pas se toucher soi-même une fois tueur.',
+  info: 'Tout le monde démarre à 0. Mets 3 marques dans ton numéro pour devenir Tueur ☠ (score 3). En tant que tueur, vise les numéros adverses pour faire baisser leur score : à −2, le joueur est éliminé. Si un tueur se fait toucher et repasse sous 3, il perd son statut et doit remonter à 3 pour rechasser. Dernier survivant gagne.',
 
   initGame(g) {
     const all = [...Array(20)].map((_, i) => i + 1)
@@ -52,9 +52,13 @@ export default {
     if (p.killer) {
       const target = g.players.find((o) => o !== p && o.number === seg && !o.elim)
       if (target) {
+        const wasKiller = target.killer
         target.score -= dart.mult
+        // Repasser sous 3 fait perdre le statut de Tueur (il faut revenir à 3 pour rechasser)
+        if (target.score < KILLER_AT) target.killer = false
         let msg = `${target.name} → ${target.score}`
         if (target.score <= ELIM_AT) { target.elim = true; msg = `${target.name} ÉLIMINÉ 💀` }
+        else if (wasKiller && !target.killer) msg = `${target.name} n'est plus tueur (${target.score})`
         if (aliveWin(g)) return { flash: 'GAME !' }
         return { toast: msg }
       }
