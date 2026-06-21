@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
 import Board from '../components/Board.jsx'
+import Icon from '../components/Icon.jsx'
 import { MODE_LIST } from '../game/modes.js'
 import { getMode } from '../game/engine/registry.js'
 import { getFriendships } from '../lib/friends.js'
@@ -27,10 +28,10 @@ export default function Home() {
       <TopBar right={
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="icon-btn" style={{ position: 'relative' }} onClick={() => nav('/notifications')}>
-            🔔{notifs > 0 && <span className="nbadge">{notifs}</span>}
+            <Icon name="bell" size={19} />{notifs > 0 && <span className="nbadge">{notifs}</span>}
           </button>
-          <button className="icon-btn" onClick={() => nav('/friends')}>👥</button>
-          <button className="icon-btn" onClick={() => nav('/profile')}>⚙</button>
+          <button className="icon-btn" onClick={() => nav('/friends')}><Icon name="friends" size={19} /></button>
+          <button className="icon-btn" onClick={() => nav('/profile')}><Icon name="settings" size={18} /></button>
         </div>
       } />
 

@@ -38,6 +38,7 @@ export default function OnlineGame() {
   const [celeb, setCeleb] = useState(null)
   const [emoteFly, setEmoteFly] = useState(null)
   const [cooldown, setCooldown] = useState(0)
+  const [leaveOpen, setLeaveOpen] = useState(false)
 
   const matchRef = useRef(null)
   const timers = useRef([])
@@ -148,7 +149,16 @@ export default function OnlineGame() {
     try { await sendMessage(id, myId, body) } catch (e) { /* ignore */ }
   }
 
-  function quit() { if (confirm('Quitter ? La partie reste reprenable depuis l’accueil.')) nav('/') }
+  // Abandon : l'adversaire gagne, le match est clôturé.
+  function forfeit() {
+    const cur = matchRef.current
+    const st = cur?.state
+    if (!st) { nav('/'); return }
+    const oppId = st.players.find((pl) => pl.id !== myId)?.id
+    const ng = { ...st, finished: true, winner: oppId }
+    persistMatch(id, { state: ng, status: 'finished', winner_id: oppId }).catch(() => {})
+    nav('/')
+  }
 
   if (err) return <div className="screen"><TopBar back={() => nav('/')} title="Partie" /><div className="empty"><div className="big">🚫</div><p>{err}</p></div></div>
   if (!match) return <div className="center-screen"><div><div className="spinner" />Chargement de la partie…</div></div>
@@ -169,7 +179,7 @@ export default function OnlineGame() {
 
   return (
     <div className="screen playing">
-      <TopBar back={quit} right={
+      <TopBar back={() => setLeaveOpen(true)} right={
         <button className="icon-btn" style={{ position: 'relative' }} onClick={() => setChatOpen((o) => !o)}>
           💬{unread > 0 && <span className="nbadge">{unread}</span>}
         </button>
@@ -234,6 +244,22 @@ export default function OnlineGame() {
       {emoteFly && <div className="emote-fly"><div className="e" key={emoteFly.key}>{emoteFly.e}</div></div>}
 
       {flash && <div className="flash show"><div className={'txt' + (flash === 'BUST' ? ' bust' : '')}>{flash}</div></div>}
+
+      {leaveOpen && (
+        <div className="modal-back" onClick={() => setLeaveOpen(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: 34 }}>🚪</div>
+            <h2 style={{ color: '#fff', fontSize: 18, marginTop: 4 }}>Quitter la partie ?</h2>
+            <p className="muted" style={{ fontSize: 13.5, margin: '8px 0 18px', lineHeight: 1.5 }}>
+              Tu peux la <b style={{ color: 'var(--neon)' }}>laisser en cours</b> pour la reprendre plus tard,
+              ou <b style={{ color: 'var(--red)' }}>abandonner</b> — l’adversaire remportera la partie.
+            </p>
+            <button className="btn primary" style={{ marginBottom: 9 }} onClick={() => nav('/')}>Laisser &amp; reprendre plus tard</button>
+            <button className="btn danger" style={{ marginBottom: 9 }} onClick={forfeit}>Abandonner (l’adversaire gagne)</button>
+            <button className="btn ghost" onClick={() => setLeaveOpen(false)}>Annuler</button>
+          </div>
+        </div>
+      )}
 
       {match.status === 'finished' && winner && (
         <div className="modal-back">

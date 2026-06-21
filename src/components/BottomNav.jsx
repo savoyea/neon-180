@@ -1,11 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import Icon from './Icon.jsx'
 
 const ITEMS = [
-  { to: '/', icon: '◎', label: 'Accueil' },
-  { to: '/play', icon: '🎯', label: 'Jouer' },
-  { to: '/stats', icon: '📊', label: 'Stats' },
-  { to: '/history', icon: '🕘', label: 'Historique' },
-  { to: '/profile', icon: '👤', label: 'Profil' },
+  { to: '/', icon: 'home', label: 'Accueil' },
+  { to: '/play', icon: 'play', label: 'Jouer' },
+  { to: '/stats', icon: 'stats', label: 'Stats' },
+  { to: '/history', icon: 'history', label: 'Historique' },
+  { to: '/profile', icon: 'profile', label: 'Profil' },
 ]
 
 export default function BottomNav() {
@@ -15,7 +16,7 @@ export default function BottomNav() {
     <nav className="nav">
       {ITEMS.map((it) => (
         <button key={it.to} className={pathname === it.to ? 'on' : ''} onClick={() => nav(it.to)}>
-          <span className="ni">{it.icon}</span>
+          <span className="ni"><Icon name={it.icon} size={22} /></span>
           {it.label}
         </button>
       ))}

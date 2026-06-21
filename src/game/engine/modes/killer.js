@@ -8,22 +8,22 @@ function aliveWin(g) {
   return false
 }
 
-export const KILLER_TO_BECOME = 3 // marques sur son numéro pour devenir tueur
+export const KILLER_AT = 3   // marques sur son numéro pour devenir tueur (score = 3)
+export const ELIM_AT = -2    // score d'élimination
 
 export default {
   key: 'killer',
   name: 'Killer',
   minPlayers: 2,
   board: null,
-  defaultOptions: { lives: 3, assign: 'random', numbers: {} },
+  defaultOptions: { assign: 'random', numbers: {} },
   optionFields: [
-    { type: 'choice', key: 'lives', label: 'Vies par joueur', options: [3, 4, 5].map((v) => ({ value: v, label: v + ' vies' })) },
     { type: 'choice', key: 'assign', label: 'Numéros des joueurs', options: [
       { value: 'random', label: '🎲 Aléatoires', hint: 'Chaque joueur reçoit un numéro tiré au sort.' },
       { value: 'custom', label: '✍️ Choisis', hint: 'Attribue un numéro à chaque joueur.' },
     ] },
   ],
-  info: 'Touche 3 fois ton numéro pour devenir Tueur ☠, puis vise les numéros adverses pour leur retirer des vies (double = 2, triple = 3). On ne peut pas se blesser soi-même. Dernier survivant gagne.',
+  info: 'Tout le monde démarre à 0. Mets 3 marques dans ton numéro pour devenir Tueur ☠ (score 3). En tant que tueur, vise les numéros adverses pour faire baisser leur score : à −2, le joueur est éliminé. Dernier survivant gagne. On ne peut pas se toucher soi-même une fois tueur.',
 
   initGame(g) {
     const all = [...Array(20)].map((_, i) => i + 1)
@@ -36,25 +36,25 @@ export default {
       g._nums = shuffle(all).slice(0, g.players.length)
     }
   },
-  initPlayer(p, { index, game }) { p.number = game._nums[index]; p.lives = game.opts.lives; p.killer = false; p.killerHits = 0; p.elim = false },
+  initPlayer(p, { index, game }) { p.number = game._nums[index]; p.score = 0; p.killer = false; p.elim = false },
 
   applyDart(g, p, dart) {
     if (dart.seg === 0 || g.finished || p.elim) return {}
     const seg = dart.seg
-    // Toucher son propre numéro
+    // Son propre numéro → progression vers Tueur (pas d'auto-dégât)
     if (seg === p.number) {
-      if (p.killer) return {} // déjà tueur — on ne peut pas se blesser soi-même
-      p.killerHits = Math.min(KILLER_TO_BECOME, p.killerHits + dart.mult)
-      if (p.killerHits >= KILLER_TO_BECOME) { p.killer = true; return { flash: 'TUEUR ☠', toast: `${p.name} devient TUEUR ☠` } }
-      return { toast: `${p.name} : ${p.killerHits}/${KILLER_TO_BECOME} pour devenir tueur` }
+      if (p.killer) return {}
+      p.score = Math.min(KILLER_AT, p.score + dart.mult)
+      if (p.score >= KILLER_AT) { p.killer = true; p.score = KILLER_AT; return { flash: 'TUEUR ☠', toast: `${p.name} devient TUEUR ☠` } }
+      return { toast: `${p.name} : ${Math.max(0, p.score)}/${KILLER_AT} pour devenir tueur` }
     }
-    // Toucher un adversaire (seulement si on est tueur)
+    // Numéro adverse → seul un tueur peut attaquer
     if (p.killer) {
       const target = g.players.find((o) => o !== p && o.number === seg && !o.elim)
       if (target) {
-        target.lives = Math.max(0, target.lives - dart.mult)
-        let msg = `${target.name} : -${dart.mult} vie${dart.mult > 1 ? 's' : ''}`
-        if (target.lives === 0) { target.elim = true; msg = `${target.name} ÉLIMINÉ 💀` }
+        target.score -= dart.mult
+        let msg = `${target.name} → ${target.score}`
+        if (target.score <= ELIM_AT) { target.elim = true; msg = `${target.name} ÉLIMINÉ 💀` }
         if (aliveWin(g)) return { flash: 'GAME !' }
         return { toast: msg }
       }
@@ -64,9 +64,9 @@ export default {
 
   scoreboard(g, p) {
     return {
-      big: '♥'.repeat(Math.max(0, p.lives)) || '✗',
-      sub: p.elim ? 'Éliminé' : p.killer ? `N°${p.number} · TUEUR ☠` : `N°${p.number} · ${p.killerHits || 0}/${KILLER_TO_BECOME}`,
-      pscoreStyle: { fontSize: '26px', color: p.lives > 0 ? 'var(--red)' : 'var(--muted)' },
+      big: p.elim ? '💀' : p.score,
+      sub: p.elim ? 'Éliminé' : `N°${p.number}${p.killer ? ' · TUEUR ☠' : ` · ${Math.max(0, p.score)}/${KILLER_AT}`}`,
+      pscoreStyle: { fontSize: '32px', color: p.elim ? 'var(--muted)' : p.score < 0 ? 'var(--red)' : p.killer ? 'var(--neon)' : 'var(--text)' },
     }
   },
 
@@ -77,9 +77,9 @@ export default {
   },
 
   rank(g) {
-    const ps = [...g.players].sort((a, b) => (b.id === g.winner) - (a.id === g.winner) || b.lives - a.lives)
+    const ps = [...g.players].sort((a, b) => (a.elim ? 1 : 0) - (b.elim ? 1 : 0) || b.score - a.score)
     ps.sort((a, b) => (b.id === g.winner) - (a.id === g.winner))
     return ps
   },
-  resultSub(g, p) { return p.elim ? 'Éliminé' : `${p.lives} vie(s)` },
+  resultSub(g, p) { return p.elim ? 'Éliminé' : `${p.score} pts` },
 }
