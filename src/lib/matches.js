@@ -8,9 +8,9 @@ const GUEST = 'guest:guest_id (id, username)'
 // Modes jouables en ligne (on exclut le Défi de bar, jeu de comptoir local).
 export const ONLINE_MODES = ['x01', 'cricket', 'atw', 'killer', 'countup']
 
-export async function createInvite(hostId, guestId, mode, options) {
+export async function createInvite(hostId, guestId, mode, options, ranked = false) {
   const { data, error } = await supabase.from('matches')
-    .insert({ host_id: hostId, guest_id: guestId, mode, options, status: 'invited' })
+    .insert({ host_id: hostId, guest_id: guestId, mode, options, status: 'invited', ranked })
     .select().single()
   if (error) throw error
   return data

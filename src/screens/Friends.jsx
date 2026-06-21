@@ -31,6 +31,7 @@ export default function Friends() {
   const [tab, setTab] = useState('amis')
   const [invite, setInvite] = useState(null) // { profile } cible d'invitation
   const [inviteMode, setInviteMode] = useState('x01')
+  const [inviteRanked, setInviteRanked] = useState(false)
   const [data, setData] = useState({ friends: [], incoming: [], outgoing: [] })
   const [term, setTerm] = useState('')
   const [results, setResults] = useState([])
@@ -200,12 +201,17 @@ export default function Friends() {
                 return <button key={k} className={'chip' + (k === inviteMode ? ' on' : '')} onClick={() => setInviteMode(k)}>{m.ico} {m.name}</button>
               })}
             </div>
+            <div className="toggle-row" onClick={() => setInviteRanked((r) => !r)} style={{ marginBottom: 14 }}>
+              <div className="lbl"><b>Partie classée 🏆</b><small>Compte pour l’ELO et le classement</small></div>
+              <div className={'switch' + (inviteRanked ? ' on' : '')}><div className="knob" /></div>
+            </div>
             <div className="modal-actions">
               <button className="btn ghost" onClick={() => setInvite(null)}>Annuler</button>
               <button className="btn primary" disabled={busy} onClick={async () => {
                 setBusy(true)
                 try {
-                  const m = await createInvite(myId, invite.id, inviteMode, getMode(inviteMode).defaultOptions)
+                  const opts = inviteRanked ? { start: 501, doubleOut: true, doubleIn: false, legs: 1 } : getMode(inviteMode).defaultOptions
+                  const m = await createInvite(myId, invite.id, inviteRanked ? 'x01' : inviteMode, opts, inviteRanked)
                   setInvite(null); nav('/match/' + m.id)
                 } catch (e) { setBusy(false) }
               }}>Envoyer l’invitation ›</button>

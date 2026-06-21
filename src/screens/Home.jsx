@@ -62,6 +62,12 @@ export default function Home() {
         </>
       )}
 
+      <button className="ranked-cta" onClick={() => nav('/ranked')}>
+        <span className="rc-ic">⚔️</span>
+        <span className="rc-text"><b>Mode classé</b><small>Grimpe les rangs · Bronze → Légende</small></span>
+        <span className="rc-arrow">›</span>
+      </button>
+
       <div className="quick-links">
         <button className="quick-link" onClick={() => nav('/leagues')}><span className="ql-ic">🛡️</span>Ligues</button>
         <button className="quick-link" onClick={() => nav('/rankings')}><span className="ql-ic">🏆</span>Classement</button>

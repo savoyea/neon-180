@@ -18,6 +18,7 @@ import PlanCompare from './screens/PlanCompare.jsx'
 import Notifications from './screens/Notifications.jsx'
 import GameAnalysis from './screens/GameAnalysis.jsx'
 import PlayerProfile from './screens/PlayerProfile.jsx'
+import Ranked from './screens/Ranked.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -43,7 +44,7 @@ function Protected({ children }) {
   return children
 }
 
-const NAV_ROUTES = ['/', '/play', '/friends', '/leagues', '/rankings', '/stats', '/history', '/profile']
+const NAV_ROUTES = ['/', '/play', '/friends', '/leagues', '/rankings', '/ranked', '/stats', '/history', '/profile']
 
 function AuthedApp() {
   const location = useLocation()
@@ -62,6 +63,7 @@ function AuthedApp() {
           <Route path="/leagues" element={<Protected><Leagues /></Protected>} />
           <Route path="/leagues/:id" element={<Protected><LeagueDetail /></Protected>} />
           <Route path="/rankings" element={<Protected><Rankings /></Protected>} />
+          <Route path="/ranked" element={<Protected><Ranked /></Protected>} />
           <Route path="/badges" element={<Protected><Badges /></Protected>} />
           <Route path="/premium" element={<Protected><Dart180Plus /></Protected>} />
           <Route path="/plans" element={<Protected><PlanCompare /></Protected>} />
