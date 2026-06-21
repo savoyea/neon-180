@@ -7,7 +7,9 @@ export function computeStatus(profile) {
   if (!profile?.last_seen) return 'offline'
   const fresh = Date.now() - new Date(profile.last_seen).getTime() < 90_000
   if (!fresh) return 'offline'
-  return profile.status === 'in_game' ? 'in_game' : 'online'
+  if (profile.status === 'in_game') return 'in_game'
+  if (profile.status === 'online') return 'online'
+  return 'offline' // status 'offline' (joueur invisible) ou inconnu
 }
 export const STATUS_LABEL = { online: 'En ligne', offline: 'Hors ligne', in_game: 'En partie' }
 

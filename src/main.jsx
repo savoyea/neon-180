@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './lib/auth.jsx'
 import App from './App.jsx'
+import { registerSW } from './lib/pwa.js'
 import './index.css'
+
+registerSW()
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

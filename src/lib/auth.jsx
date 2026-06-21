@@ -90,6 +90,23 @@ export function AuthProvider({ children }) {
     return { error }
   }, [])
 
+  // ----- Mise à jour du profil (réglages) -----
+  const updateProfile = useCallback(async (fields) => {
+    if (!isConfigured) {
+      setProfile((prev) => {
+        const next = { ...prev, ...fields }
+        try { localStorage.setItem(DEMO_KEY, JSON.stringify(next)) } catch (e) { /* ignore */ }
+        return next
+      })
+      return { error: null }
+    }
+    setProfile((prev) => ({ ...prev, ...fields }))
+    const uid = session?.user?.id
+    if (!uid) return { error: null }
+    const { error } = await supabase.from('profiles').update(fields).eq('id', uid)
+    return { error }
+  }, [session])
+
   // ----- Déconnexion -----
   const signOut = useCallback(async () => {
     if (!isConfigured) {
@@ -106,7 +123,7 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     isAuthed: Boolean(session),
     isDemo: !isConfigured,
-    signUp, signIn, signOut,
+    signUp, signIn, signOut, updateProfile,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

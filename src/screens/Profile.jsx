@@ -1,12 +1,16 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
 import { BADGES, earnedBadges } from '../game/badges.js'
 import { isPremium } from '../lib/premium.js'
+import ShareModal from '../components/ShareModal.jsx'
+import { IosInstructions } from '../components/InstallPrompt.jsx'
+import { isStandalone, canPrompt, isIOS, promptInstall } from '../lib/pwa.js'
 
 export default function Profile() {
   const nav = useNavigate()
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, updateProfile } = useAuth()
   const name = profile?.username || 'Joueur'
   const level = profile?.level ?? 1
   const xp = profile?.xp ?? 0
@@ -14,10 +18,17 @@ export default function Profile() {
   const pct = Math.min(100, Math.round((xp / xpNext) * 100))
   const earned = earnedBadges(profile)
   const premium = isPremium(profile)
+  const visible = profile?.visible !== false
+  const [share, setShare] = useState(false)
+  const [ios, setIos] = useState(false)
 
   async function logout() {
     await signOut()
     nav('/welcome', { replace: true })
+  }
+  async function install() {
+    if (canPrompt()) await promptInstall()
+    else setIos(true)
   }
 
   return (
@@ -61,7 +72,20 @@ export default function Profile() {
           </div>}
       <button className="btn ghost" style={{ marginTop: 12 }} onClick={() => nav('/badges')}>Voir tous les badges ›</button>
 
+      <div className="section-title"><h2>Réglages</h2></div>
+      <div className="toggle-row" onClick={() => updateProfile({ visible: !visible })}>
+        <div className="lbl"><b>Visible en ligne</b><small>{visible ? 'Tes amis te voient connecté' : 'Tu apparais hors ligne pour tes amis'}</small></div>
+        <div className={'switch' + (visible ? ' on' : '')}><div className="knob" /></div>
+      </div>
+      <button className="btn ghost" style={{ marginTop: 4 }} onClick={() => setShare(true)}>🔗 Partager l’app</button>
+      {!isStandalone() && (
+        <button className="btn ghost" style={{ marginTop: 9 }} onClick={install}>📲 Installer l’app</button>
+      )}
+
       <button className="btn danger" style={{ marginTop: 22 }} onClick={logout}>Déconnexion</button>
+
+      {share && <ShareModal onClose={() => setShare(false)} />}
+      {ios && <IosInstructions onClose={() => setIos(false)} />}
     </div>
   )
 }

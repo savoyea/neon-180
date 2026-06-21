@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth.jsx'
 import TopBar from '../components/TopBar.jsx'
 import Board from '../components/Board.jsx'
 import Icon from '../components/Icon.jsx'
+import InstallBanner from '../components/InstallPrompt.jsx'
 import { MODE_LIST } from '../game/modes.js'
 import { getMode } from '../game/engine/registry.js'
 import { getFriendships } from '../lib/friends.js'
@@ -65,6 +66,8 @@ export default function Home() {
         <button className="quick-link" onClick={() => nav('/leagues')}><span className="ql-ic">🛡️</span>Ligues</button>
         <button className="quick-link" onClick={() => nav('/rankings')}><span className="ql-ic">🏆</span>Classement</button>
       </div>
+
+      <InstallBanner />
 
       <div className="section-title"><h2>Modes de jeu</h2><span className="hint">{MODE_LIST.length} disponibles</span></div>
       <div className="mode-grid">
