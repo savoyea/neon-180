@@ -11,6 +11,13 @@ export function computeStatus(profile) {
 }
 export const STATUS_LABEL = { online: 'En ligne', offline: 'Hors ligne', in_game: 'En partie' }
 
+export async function getProfileById(id) {
+  if (!isConfigured) return null
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export async function searchProfiles(term, myId) {
   if (!isConfigured || !term.trim()) return []
   const { data, error } = await supabase

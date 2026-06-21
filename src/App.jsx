@@ -16,6 +16,8 @@ import Dart180Plus from './screens/Dart180Plus.jsx'
 import AdvancedStats from './screens/AdvancedStats.jsx'
 import PlanCompare from './screens/PlanCompare.jsx'
 import Notifications from './screens/Notifications.jsx'
+import GameAnalysis from './screens/GameAnalysis.jsx'
+import PlayerProfile from './screens/PlayerProfile.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -65,6 +67,8 @@ function AuthedApp() {
           <Route path="/plans" element={<Protected><PlanCompare /></Protected>} />
           <Route path="/advanced-stats" element={<Protected><AdvancedStats /></Protected>} />
           <Route path="/notifications" element={<Protected><Notifications /></Protected>} />
+          <Route path="/game-analysis/:id" element={<Protected><GameAnalysis /></Protected>} />
+          <Route path="/player/:id" element={<Protected><PlayerProfile /></Protected>} />
           <Route path="/stats" element={<Protected><Stats /></Protected>} />
           <Route path="/history" element={<Protected><History /></Protected>} />
           <Route path="/profile" element={<Protected><Profile /></Protected>} />

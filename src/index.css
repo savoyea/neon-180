@@ -382,6 +382,16 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
 .celebration .cel-text{font-family:'Oswald';font-weight:600;font-size:17px;line-height:1.25;margin-top:6px;color:#fff}
 .celebration .cel-league{font-size:12px;color:var(--neon-dim);margin-top:6px;letter-spacing:1px;font-family:'Oswald'}
 
+/* analyse de partie */
+.ana-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.ana-metrics > div{text-align:center}
+.ana-metrics b{display:block;font-family:'Oswald';font-weight:700;font-size:20px;color:var(--neon)}
+.ana-metrics small{color:var(--muted);font-size:10px;letter-spacing:.5px;text-transform:uppercase}
+.ana-line{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r-sm);
+  background:var(--surface);margin-bottom:8px;font-size:14px;font-weight:600}
+.ana-line.ok{border-color:rgba(57,255,106,.25)}
+.ana-line.warn{border-color:rgba(255,210,63,.25)}
+
 /* plan comparison table */
 .plan-table{width:100%;border-collapse:collapse;margin-top:8px}
 .plan-table th,.plan-table td{padding:11px 8px;text-align:center;border-bottom:1px solid var(--line);font-size:13.5px}

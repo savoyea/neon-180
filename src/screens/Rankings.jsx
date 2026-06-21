@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { isConfigured } from '../lib/supabase.js'
@@ -6,6 +7,7 @@ import { globalRanking, RANK_METRICS } from '../lib/rankings.js'
 
 export default function Rankings() {
   const { user } = useAuth()
+  const nav = useNavigate()
   const [metric, setMetric] = useState('level')
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,7 +35,8 @@ export default function Rankings() {
         <div className="empty"><div className="big">🏆</div><p>Pas encore de joueurs classés. Joue des parties en ligne !</p></div>
       ) : (
         rows.map((p, i) => (
-          <div key={p.id} className={'rank-row' + (p.id === user?.id ? ' me' : '')}>
+          <div key={p.id} className={'rank-row' + (p.id === user?.id ? ' me' : '')} style={{ cursor: 'pointer' }}
+            onClick={() => p.id !== user?.id && nav('/player/' + p.id)}>
             <div className={'pos' + (i < 3 ? ' top' : '')}>{i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>
             <div className="meta"><b>{p.username}</b><small>Niv {p.level} · {p.games_played} parties</small></div>
             <div className="metric">{m.fmt(p)}</div>

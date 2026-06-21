@@ -115,8 +115,10 @@ export default function Friends() {
           ? <div className="empty"><div className="big">👥</div><p>Pas encore d’amis. Cherche un joueur par son pseudo !</p></div>
           : data.friends.map((e) => (
             <div className="row" key={e.friendshipId}>
-              <Avatar name={e.profile.username} />
-              <div className="meta"><b>{e.profile.username}</b><StatusDot profile={e.profile} /></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => nav('/player/' + e.profile.id)}>
+                <Avatar name={e.profile.username} />
+                <div className="meta"><b>{e.profile.username}</b><StatusDot profile={e.profile} /></div>
+              </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button className="btn sm primary" disabled={busy} onClick={() => { setInviteMode('x01'); setInvite(e.profile) }}>🎯</button>
                 <button className="btn sm danger" disabled={busy} onClick={() => act(() => removeFriendship(e.friendshipId))}>✕</button>
@@ -130,8 +132,10 @@ export default function Friends() {
           ? <div className="empty"><div className="big">🌙</div><p>Aucun ami en ligne pour l’instant.</p></div>
           : online.map((e) => (
             <div className="row" key={e.friendshipId}>
-              <Avatar name={e.profile.username} />
-              <div className="meta"><b>{e.profile.username}</b><StatusDot profile={e.profile} /></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => nav('/player/' + e.profile.id)}>
+                <Avatar name={e.profile.username} />
+                <div className="meta"><b>{e.profile.username}</b><StatusDot profile={e.profile} /></div>
+              </div>
               <button className="btn sm primary" disabled={busy} onClick={() => { setInviteMode('x01'); setInvite(e.profile) }}>🎯 Jouer</button>
             </div>
           ))

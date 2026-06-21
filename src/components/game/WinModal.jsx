@@ -7,7 +7,7 @@ export default function WinModal() {
   const nav = useNavigate()
   if (!winData) return null
 
-  const { game } = winData
+  const { game, record } = winData
   const mode = getMode(game.mode)
   const ranked = mode.rank(game)
   const winner = game.players.find((p) => p.id === game.winner) || ranked[0]
@@ -37,6 +37,7 @@ export default function WinModal() {
             </div>
           ))}
         </div>
+        {record && <button className="btn ghost" style={{ marginBottom: 9 }} onClick={() => { quitGame(); nav('/game-analysis/' + record.id) }}>📊 Voir l’analyse de partie</button>}
         <div className="modal-actions">
           <button className="btn ghost" onClick={home}>Accueil</button>
           <button className="btn primary" onClick={rematch}>Revanche</button>

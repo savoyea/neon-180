@@ -72,7 +72,8 @@ export default function LeagueDetail() {
 
       <div className="section-title"><h2>Classement</h2><span className="hint">par XP</span></div>
       {active.map((p, i) => (
-        <div key={p.id} className={'rank-row' + (p.id === myId ? ' me' : '')}>
+        <div key={p.id} className={'rank-row' + (p.id === myId ? ' me' : '')} style={{ cursor: 'pointer' }}
+          onClick={() => p.id !== myId && nav('/player/' + p.id)}>
           <div className={'pos' + (i < 3 ? ' top' : '')}>{i < 3 ? ['🥇', '🥈', '🥉'][i] : i + 1}</div>
           <div className="meta"><b>{p.username}{p.role === 'owner' ? ' 👑' : ''}</b><small>{p.wins} V · {p.total_180} × 180</small></div>
           <div className="metric">Niv {p.level}</div>

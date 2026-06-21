@@ -62,6 +62,10 @@ export function endTurn(game) {
   const g = clone(game)
   if (g.finished) return { game: g, result: { finish: true } }
   const mode = getMode(g.mode)
+  // Score de la volée du joueur courant (analyse de partie : premier 9, meilleure volée…)
+  const cur = g.players[g.turn.pi]
+  cur.turnScores = cur.turnScores || []
+  cur.turnScores.push(g.turn.darts.reduce((s, d) => s + d.val, 0))
   let r = {}
   if (mode.endTurn) r = mode.endTurn(g) || {}
   else defaultAdvance(g)
@@ -106,6 +110,7 @@ export function buildRecord(game) {
       s180: p.s180 || 0, tons: p.tons || 0, bestCheckout: p.bestCheckout || 0,
       avg: g.mode === 'x01' && p.dartsThrown ? +(p.scored / p.dartsThrown * 3).toFixed(1) : 0,
       dartHits: p.dartHits || {},
+      turnScores: p.turnScores || [],
     })),
   }
 }

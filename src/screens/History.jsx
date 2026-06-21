@@ -26,14 +26,14 @@ export default function History() {
     const mine = h.players.find((p) => p.id === user?.id) || h.players.find((p) => (p.name || '').toLowerCase() === (user?.username || '').toLowerCase())
     const won = mine && h.winner === mine.id
     return (
-      <div className="row" key={h.id}>
+      <button className="row" style={{ width: '100%', textAlign: 'left' }} key={h.id} onClick={() => nav('/game-analysis/' + h.id)}>
         <div className="avatar">{(winner?.name || '?').slice(0, 2).toUpperCase()}</div>
         <div className="meta">
           <b>{h.modeName}{h.variant ? ' · ' + h.variant : ''}</b>
           <small>🏆 {winner?.name} · {h.players.length} joueur{h.players.length > 1 ? 's' : ''} · {fmtDate(h.date)}</small>
         </div>
-        <div className="val" style={{ color: won ? 'var(--neon)' : 'var(--muted)', fontSize: 13 }}>{won ? 'Victoire' : winner?.sub?.split('·')[0]}</div>
-      </div>
+        <div className="val" style={{ color: won ? 'var(--neon)' : 'var(--muted)', fontSize: 13 }}>{won ? 'Victoire' : winner?.sub?.split('·')[0]} ›</div>
+      </button>
     )
   })
 
