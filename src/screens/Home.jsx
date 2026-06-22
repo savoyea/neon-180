@@ -69,6 +69,7 @@ export default function Home() {
       </button>
 
       <div className="quick-links">
+        <button className="quick-link" onClick={() => nav('/missions')}><span className="ql-ic">🎖️</span>Missions</button>
         <button className="quick-link" onClick={() => nav('/leagues')}><span className="ql-ic">🛡️</span>Ligues</button>
         <button className="quick-link" onClick={() => nav('/rankings')}><span className="ql-ic">🏆</span>Classement</button>
       </div>

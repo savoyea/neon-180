@@ -22,6 +22,8 @@ import GameAnalysis from './screens/GameAnalysis.jsx'
 import PlayerProfile from './screens/PlayerProfile.jsx'
 import Ranked from './screens/Ranked.jsx'
 import Customize from './screens/Customize.jsx'
+import Missions from './screens/Missions.jsx'
+import BattlePass from './screens/BattlePass.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -47,7 +49,7 @@ function Protected({ children }) {
   return children
 }
 
-const NAV_ROUTES = ['/', '/play', '/friends', '/leagues', '/rankings', '/ranked', '/stats', '/history', '/profile']
+const NAV_ROUTES = ['/', '/play', '/friends', '/leagues', '/rankings', '/ranked', '/missions', '/stats', '/history', '/profile']
 
 function AuthedApp() {
   const location = useLocation()
@@ -68,6 +70,8 @@ function AuthedApp() {
           <Route path="/rankings" element={<Protected><Rankings /></Protected>} />
           <Route path="/ranked" element={<Protected><Ranked /></Protected>} />
           <Route path="/customize" element={<Protected><Customize /></Protected>} />
+          <Route path="/missions" element={<Protected><Missions /></Protected>} />
+          <Route path="/battlepass" element={<Protected><BattlePass /></Protected>} />
           <Route path="/badges" element={<Protected><Badges /></Protected>} />
           <Route path="/premium" element={<Protected><Dart180Plus /></Protected>} />
           <Route path="/plans" element={<Protected><PlanCompare /></Protected>} />

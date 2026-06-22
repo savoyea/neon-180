@@ -529,12 +529,41 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
   80%{opacity:1}100%{transform:scale(1.1) translateY(-30px);opacity:0}}
 
 /* home quick links */
-.quick-links{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-.quick-link{display:flex;align-items:center;gap:10px;padding:16px 14px;border:1px solid var(--line);
+.quick-links{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.quick-link{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border:1px solid var(--line);
   border-radius:var(--r);background:linear-gradient(180deg,var(--surface),var(--bg2));color:var(--text);
-  font-family:'Oswald';font-weight:600;font-size:15px;letter-spacing:.5px}
+  font-family:'Oswald';font-weight:600;font-size:13px;letter-spacing:.5px}
 .quick-link:active{border-color:var(--line-strong);box-shadow:var(--glow-soft)}
 .quick-link .ql-ic{font-size:22px;filter:drop-shadow(0 0 6px rgba(57,255,106,.4))}
+
+/* missions */
+.mission{display:flex;align-items:center;gap:12px;padding:13px 14px;border:1px solid var(--line);
+  border-radius:var(--r-sm);background:var(--surface);margin-bottom:9px}
+.mission .m-main{flex:1;min-width:0}
+.mission .m-main b{font-family:'Oswald';font-weight:600;font-size:15px;display:block;margin-bottom:7px}
+.m-bar{position:relative;height:16px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);overflow:hidden}
+.m-bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--neon-dim),var(--neon))}
+.m-bar > span{position:absolute;inset:0;display:grid;place-items:center;font-size:10px;font-weight:700;color:var(--text)}
+.m-xp{font-family:'Oswald';font-weight:700;font-size:13px;color:var(--muted);flex:none}
+.m-done{color:var(--neon);font-weight:700;font-size:18px;flex:none}
+
+/* battle pass */
+.bp-head{display:grid;grid-template-columns:44px 1fr 1fr;gap:8px;margin:18px 2px 8px;
+  font-family:'Oswald';font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.bp-head .bp-prem{color:var(--amber)}
+.bp-track{display:flex;flex-direction:column;gap:8px}
+.bp-row{display:grid;grid-template-columns:44px 1fr 1fr;gap:8px;align-items:stretch}
+.bp-tier{display:grid;place-items:center;font-family:'Oswald';font-weight:700;font-size:16px;color:var(--muted);
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface)}
+.bp-row.on .bp-tier{color:var(--neon);border-color:var(--line-strong)}
+.bp-reward{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);opacity:.5}
+.bp-reward .bp-e{font-size:20px}
+.bp-reward small{font-size:10px;color:var(--muted);text-align:center;line-height:1.1}
+.bp-reward.unlocked{opacity:1;border-color:var(--line-strong);box-shadow:var(--glow-soft)}
+.bp-reward.prem{background:rgba(255,210,63,.05)}
+.bp-reward.prem.unlocked{border-color:rgba(255,210,63,.4);box-shadow:0 0 12px rgba(255,210,63,.15)}
+.bp-reward.locked{opacity:.32}
 
 /* leagues */
 .league-card{display:flex;align-items:center;gap:13px;padding:14px;border:1px solid var(--line);
