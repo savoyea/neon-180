@@ -473,6 +473,23 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
 .ranked-cta .rc-text small{color:var(--muted);font-size:12px}
 .ranked-cta .rc-arrow{font-family:'Oswald';font-size:22px;color:var(--neon)}
 
+/* personnalisation (cosmétiques) */
+.cz-avatar{border-radius:50%;display:grid;place-items:center;margin:0 auto;color:#04140A;
+  font-family:'Oswald';font-weight:700}
+.cz-avatar.pulse{animation:czPulse 1.6s ease-in-out infinite}
+@keyframes czPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.cz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.cz-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px;
+  border:1px solid var(--line);border-radius:var(--r);background:linear-gradient(180deg,var(--surface),var(--bg2));
+  color:var(--text);min-height:84px;justify-content:center}
+.cz-item.on{border-color:var(--neon);box-shadow:0 0 0 1px var(--neon) inset,0 0 16px rgba(57,255,106,.25)}
+.cz-item.locked{opacity:.55}
+.cz-item small{font-size:11px;color:var(--muted);text-align:center;line-height:1.1}
+.cz-item.on small{color:var(--text)}
+.cz-sw{width:34px;height:34px;border-radius:9px;display:block}
+.cz-prem{position:absolute;top:6px;right:7px;font-size:11px}
+.cz-check{position:absolute;top:6px;left:7px;color:var(--neon);font-weight:700;font-size:13px}
+
 /* badges */
 .badge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .badge{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:14px;

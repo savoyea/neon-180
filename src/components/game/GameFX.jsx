@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useGame } from '../../game/GameContext.jsx'
+import { useAuth } from '../../lib/auth.jsx'
+import { effectColor } from '../../game/cosmetics.js'
 
 // Overlay plein écran (180 !, BUST, GAME !…) + toast léger.
 export default function GameFX() {
   const { fx, clearFlash, clearToast } = useGame()
+  const { profile } = useAuth()
   const [flashShown, setFlashShown] = useState(false)
 
   useEffect(() => {
@@ -25,7 +28,10 @@ export default function GameFX() {
     <>
       {fx.flash && (
         <div className={'flash' + (flashShown ? ' show' : '')}>
-          <div className={'txt' + (isBust ? ' bust' : '')}>{fx.flash.text}</div>
+          <div className={'txt' + (isBust ? ' bust' : '')}
+            style={isBust ? undefined : { color: effectColor(profile), textShadow: `0 0 40px ${effectColor(profile)}` }}>
+            {fx.flash.text}
+          </div>
         </div>
       )}
       {fx.toast && <div className="toast">{fx.toast.text}</div>}

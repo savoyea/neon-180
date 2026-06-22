@@ -5,8 +5,10 @@ import TopBar from '../components/TopBar.jsx'
 import { BADGES, earnedBadges } from '../game/badges.js'
 import { isPremium } from '../lib/premium.js'
 import ShareModal from '../components/ShareModal.jsx'
+import Avatar from '../components/Avatar.jsx'
 import { IosInstructions } from '../components/InstallPrompt.jsx'
 import { isStandalone, canPrompt, isIOS, promptInstall } from '../lib/pwa.js'
+import { titleOf } from '../game/cosmetics.js'
 
 export default function Profile() {
   const nav = useNavigate()
@@ -37,9 +39,9 @@ export default function Profile() {
 
       <div className="card glow">
         <div className="profile-head">
-          <div className="profile-avatar">{name.slice(0, 2).toUpperCase()}</div>
-          <div className="profile-name">{name}{premium && <span className="premium-tag">⭐ 180+</span>}</div>
-          <span className="level-pill">Niveau {level} · Le Tireur</span>
+          <Avatar profile={profile} size={88} />
+          <div className="profile-name" style={{ marginTop: 12 }}>{name}{premium && <span className="premium-tag">⭐ 180+</span>}</div>
+          <span className="level-pill">Niveau {level} · {titleOf(profile)}</span>
           <div className="xpbar"><i style={{ width: pct + '%' }} /></div>
           <small className="muted">{xp} / {xpNext} XP</small>
         </div>
@@ -71,6 +73,8 @@ export default function Profile() {
             ))}
           </div>}
       <button className="btn ghost" style={{ marginTop: 12 }} onClick={() => nav('/badges')}>Voir tous les badges ›</button>
+
+      <button className="btn ghost" style={{ marginTop: 12 }} onClick={() => nav('/customize')}>🎨 Personnalisation</button>
 
       <div className="section-title"><h2>Réglages</h2></div>
       <div className="toggle-row" onClick={() => updateProfile({ visible: !visible })}>

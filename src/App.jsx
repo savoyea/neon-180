@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './lib/auth.jsx'
+import { applyTheme } from './game/cosmetics.js'
 import { GameProvider } from './game/GameContext.jsx'
 import Presence from './lib/presence.jsx'
 import BottomNav from './components/BottomNav.jsx'
@@ -19,6 +21,7 @@ import Notifications from './screens/Notifications.jsx'
 import GameAnalysis from './screens/GameAnalysis.jsx'
 import PlayerProfile from './screens/PlayerProfile.jsx'
 import Ranked from './screens/Ranked.jsx'
+import Customize from './screens/Customize.jsx'
 import Splash from './screens/Splash.jsx'
 import Login from './screens/Login.jsx'
 import Signup from './screens/Signup.jsx'
@@ -64,6 +67,7 @@ function AuthedApp() {
           <Route path="/leagues/:id" element={<Protected><LeagueDetail /></Protected>} />
           <Route path="/rankings" element={<Protected><Rankings /></Protected>} />
           <Route path="/ranked" element={<Protected><Ranked /></Protected>} />
+          <Route path="/customize" element={<Protected><Customize /></Protected>} />
           <Route path="/badges" element={<Protected><Badges /></Protected>} />
           <Route path="/premium" element={<Protected><Dart180Plus /></Protected>} />
           <Route path="/plans" element={<Protected><PlanCompare /></Protected>} />
@@ -85,7 +89,8 @@ function AuthedApp() {
 }
 
 export default function App() {
-  const { loading, isAuthed, isDemo } = useAuth()
+  const { loading, isAuthed, isDemo, profile } = useAuth()
+  useEffect(() => { applyTheme(profile) }, [profile])
   if (loading) return <><div className="vignette" /><Loading /></>
 
   return (

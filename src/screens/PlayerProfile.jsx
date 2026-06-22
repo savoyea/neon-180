@@ -7,6 +7,8 @@ import { createInvite, ONLINE_MODES } from '../lib/matches.js'
 import { getMode } from '../game/engine/registry.js'
 import { BADGES, earnedBadges } from '../game/badges.js'
 import { isPremium } from '../lib/premium.js'
+import Avatar from '../components/Avatar.jsx'
+import { titleOf } from '../game/cosmetics.js'
 
 export default function PlayerProfile() {
   const { id } = useParams()
@@ -43,9 +45,9 @@ export default function PlayerProfile() {
 
       <div className="card glow">
         <div className="profile-head">
-          <div className="profile-avatar">{p.username.slice(0, 2).toUpperCase()}</div>
-          <div className="profile-name">{p.username}{isPremium(p) && <span className="premium-tag">⭐ 180+</span>}</div>
-          <span className="level-pill">Niveau {level}</span>
+          <Avatar profile={p} size={88} />
+          <div className="profile-name" style={{ marginTop: 12 }}>{p.username}{isPremium(p) && <span className="premium-tag">⭐ 180+</span>}</div>
+          <span className="level-pill">Niveau {level} · {titleOf(p)}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 6 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: status === 'in_game' ? 'var(--amber)' : status === 'online' ? 'var(--neon)' : 'var(--muted-2)' }} />
             <small className="muted">{STATUS_LABEL[status]}</small>
