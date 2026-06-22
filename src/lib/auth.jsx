@@ -90,6 +90,11 @@ export function AuthProvider({ children }) {
     return { error }
   }, [])
 
+  // Recharge le profil depuis la base (après une partie : stats à jour).
+  const refreshProfile = useCallback(async () => {
+    if (isConfigured && session?.user) await loadProfile(session.user)
+  }, [session])
+
   // ----- Mise à jour du profil (réglages) -----
   const updateProfile = useCallback(async (fields) => {
     if (!isConfigured) {
@@ -123,7 +128,7 @@ export function AuthProvider({ children }) {
     user: session?.user || null,
     isAuthed: Boolean(session),
     isDemo: !isConfigured,
-    signUp, signIn, signOut, updateProfile,
+    signUp, signIn, signOut, updateProfile, refreshProfile,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

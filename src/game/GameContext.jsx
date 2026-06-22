@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { useAuth } from '../lib/auth.jsx'
+import { supabase, isConfigured } from '../lib/supabase.js'
 import { PALETTE, uid } from './engine/constants.js'
 import { createGame, applyDart, endTurn as engineEndTurn, undo as engineUndo, modeAction, buildRecord } from './engine/core.js'
 
@@ -11,7 +12,7 @@ const load = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JS
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { /* ignore */ } }
 
 export function GameProvider({ children }) {
-  const { profile } = useAuth()
+  const { profile, user, refreshProfile } = useAuth()
   const [roster, setRoster] = useState(() => load(ROSTER_KEY, []))
   const [history, setHistory] = useState(() => load(HISTORY_KEY, []))
   const [game, setGameState] = useState(null)
@@ -31,16 +32,30 @@ export function GameProvider({ children }) {
   const flash = (text) => setFx((f) => ({ ...f, flash: { text, key: Date.now() + Math.random() } }))
   const toast = (text) => setFx((f) => ({ ...f, toast: { text, key: Date.now() + Math.random() } }))
 
-  // Amorce le roster avec le pseudo du joueur connecté
+  // Le compte connecté est TOUJOURS un joueur du roster (id = son user.id),
+  // pour que ses parties locales comptent en base.
   useEffect(() => {
-    if (roster.length === 0 && profile?.username) {
-      const seed = [
-        { id: uid(), name: profile.username, color: PALETTE[0] },
-        { id: uid(), name: 'Joueur 2', color: PALETTE[1] },
-      ]
-      setRoster(seed); save(ROSTER_KEY, seed)
+    const meId = user?.id
+    const meName = profile?.username
+    if (!meName) return
+    setRoster((prev) => {
+      const cur = prev[0]
+      if (cur?.isMe && cur.name === meName && (!meId || cur.id === meId)) return prev // déjà à jour
+      const others = prev.filter((p) => !p.isMe && p.id !== meId)
+      const me = { id: meId || prev.find((p) => p.isMe)?.id || uid(), name: meName, color: PALETTE[0], isMe: true }
+      const next = [me, ...others]
+      if (next.length === 1) next.push({ id: uid(), name: 'Joueur 2', color: PALETTE[1] })
+      save(ROSTER_KEY, next); return next
+    })
+  }, [user, profile])
+
+  // Charge l'historique depuis la base (toutes les parties), sinon localStorage.
+  useEffect(() => {
+    if (isConfigured && user?.id) {
+      supabase.from('games').select('record').eq('created_by', user.id).order('played_at', { ascending: false }).limit(200)
+        .then(({ data }) => { if (data) setHistory(data.map((r) => r.record).filter(Boolean)) })
     }
-  }, [profile, roster.length])
+  }, [user])
 
   const addPlayer = useCallback((name) => {
     const np = { id: uid(), name: name.trim(), color: PALETTE[roster.length % PALETTE.length] }
@@ -49,18 +64,28 @@ export function GameProvider({ children }) {
     return np
   }, [roster])
 
+  const pushHistory = (record) => setHistory((h) => {
+    if (h.some((r) => r.id === record.id)) return h
+    const next = [record, ...h].slice(0, 200); save(HISTORY_KEY, next); return next
+  })
+
+  // Partie EN LIGNE terminée : stats déjà gérées par apply_match_result,
+  // on enregistre juste le détail de la partie en base (sans recompter les stats).
   const saveRecord = useCallback((record) => {
-    setHistory((h) => {
-      if (h.some((r) => r.id === record.id)) return h
-      const next = [record, ...h].slice(0, 200); save(HISTORY_KEY, next); return next
-    })
+    pushHistory(record)
+    if (isConfigured) supabase.rpc('log_game', { p_record: record, p_update_stats: false, p_online: true }).catch(() => {})
   }, [])
 
+  // Partie LOCALE terminée : enregistre en base ET met à jour les stats du compte.
   const finishGame = useCallback((g) => {
     const record = buildRecord(g)
-    setHistory((h) => { const next = [record, ...h].slice(0, 200); save(HISTORY_KEY, next); return next })
+    pushHistory(record)
     setWinData({ game: g, record })
-  }, [])
+    if (isConfigured) {
+      supabase.rpc('log_game', { p_record: record, p_update_stats: true, p_online: false })
+        .then(() => refreshProfile && refreshProfile()).catch(() => {})
+    }
+  }, [refreshProfile])
 
   const runEndTurn = useCallback((g) => {
     const { game: g2, result: r } = engineEndTurn(g)
