@@ -1,26 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { DARTBOARD_ORDER } from '../game/engine/constants.js'
-
-// Géométrie réaliste de la cible (identique au Défi de bar).
-const cx = 100, cy = 100
-const rDoubO = 86, rDoubI = 78, rTripO = 54, rTripI = 46, rBullO = 13, rBullI = 6.5
-const polar = (r, deg) => { const a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)] }
-function sector(r1, r2, a1, a2) {
-  const [x1, y1] = polar(r2, a1), [x2, y2] = polar(r2, a2)
-  const [x3, y3] = polar(r1, a2), [x4, y4] = polar(r1, a1)
-  return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r2} ${r2} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L${x3.toFixed(2)} ${y3.toFixed(2)} A${r1} ${r1} 0 0 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`
-}
-
-// Chaque secteur = une zone (single / triple / double), précalculé une fois.
-const SEGS = []
-DARTBOARD_ORDER.forEach((num, idx) => {
-  const a1 = idx * 18 - 9, a2 = idx * 18 + 9
-  SEGS.push({ num, zone: 'single', d: sector(rTripO, rDoubI, a1, a2) })
-  SEGS.push({ num, zone: 'triple', d: sector(rTripI, rTripO, a1, a2) })
-  SEGS.push({ num, zone: 'single', d: sector(rBullO, rTripI, a1, a2) })
-  SEGS.push({ num, zone: 'double', d: sector(rDoubI, rDoubO, a1, a2) })
-})
-const LABELS = DARTBOARD_ORDER.map((num, idx) => { const [lx, ly] = polar(rDoubO + 8, idx * 18); return { num, lx, ly } })
 
 const FILTERS = [
   { key: 'single', label: 'Simple' },
@@ -29,53 +8,109 @@ const FILTERS = [
   { key: 'all', label: 'Toutes' },
 ]
 
-// échelle "performance" : rouge (faible) → ambre (moyen) → vert (excellent)
-function heatColor(c, max, active) {
-  if (!active) return 'rgba(90,110,100,.05)'
-  if (c === 0) return 'rgba(120,140,130,.10)'
-  const t = Math.min(1, c / max)
-  let r, g, b
-  if (t < 0.5) { const u = t / 0.5; r = 255; g = Math.round(70 + u * 140); b = 60 }
-  else { const u = (t - 0.5) / 0.5; r = Math.round(255 - u * 198); g = Math.round(210 + u * 45); b = Math.round(60 + u * 46) }
-  return `rgba(${r},${g},${b},${(0.55 + t * 0.45).toFixed(2)})`
+// Palette type "heatmap foot" : bleu (froid) → vert → jaune → rouge (chaud).
+const RAMP = [
+  [0.00, [28, 52, 150]], [0.20, [34, 150, 210]], [0.40, [40, 200, 110]],
+  [0.60, [220, 220, 50]], [0.80, [245, 150, 45]], [1.00, [230, 45, 45]],
+]
+function ramp(t) {
+  t = Math.max(0, Math.min(1, t))
+  for (let i = 1; i < RAMP.length; i++) {
+    if (t <= RAMP[i][0]) {
+      const [t0, c0] = RAMP[i - 1], [t1, c1] = RAMP[i]
+      const k = (t - t0) / (t1 - t0)
+      return [0, 1, 2].map((j) => Math.round(c0[j] + (c1[j] - c0[j]) * k))
+    }
+  }
+  return RAMP[RAMP.length - 1][1]
+}
+
+// Points d'impact (position normalisée 0..1 + poids) selon le filtre.
+function buildPoints(totals, filter) {
+  const pts = []
+  const R = 0.46
+  const add = (angDeg, rNorm, w) => {
+    if (w > 0) { const a = (angDeg - 90) * Math.PI / 180; pts.push({ x: 0.5 + rNorm * R * Math.cos(a), y: 0.5 + rNorm * R * Math.sin(a), w }) }
+  }
+  DARTBOARD_ORDER.forEach((n, i) => {
+    const ang = i * 18
+    if (filter === 'all' || filter === 'single') add(ang, 0.62, totals[String(n)] || 0)
+    if (filter === 'all' || filter === 'triple') add(ang, 0.42, totals['T' + n] || 0)
+    if (filter === 'all' || filter === 'double') add(ang, 0.92, totals['D' + n] || 0)
+  })
+  if (filter === 'all' || filter === 'single') add(0, 0, totals['25'] || 0)
+  if (filter === 'all' || filter === 'double') add(0, 0, totals['Bull'] || 0)
+  return pts
+}
+
+function drawHeat(canvas, totals, filter) {
+  const S = canvas.width
+  const ctx = canvas.getContext('2d')
+  ctx.clearRect(0, 0, S, S)
+  const pts = buildPoints(totals, filter)
+  const max = Math.max(1, ...pts.map((p) => p.w))
+  const blob = S * 0.17
+
+  ctx.save()
+  ctx.beginPath(); ctx.arc(S / 2, S / 2, S * 0.47, 0, 7); ctx.clip()
+  // base froide (tout le plateau au minimum = bleu)
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = 0.10; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S)
+  // accumulation additive des blobs
+  ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1
+  for (const p of pts) {
+    const a = 0.18 + 0.82 * (p.w / max)
+    const g = ctx.createRadialGradient(p.x * S, p.y * S, 0, p.x * S, p.y * S, blob)
+    g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = g
+    ctx.beginPath(); ctx.arc(p.x * S, p.y * S, blob, 0, 7); ctx.fill()
+  }
+  ctx.restore()
+
+  // colorisation : alpha accumulé → couleur de la palette
+  const img = ctx.getImageData(0, 0, S, S), d = img.data
+  let maxA = 1
+  for (let i = 3; i < d.length; i += 4) if (d[i] > maxA) maxA = d[i]
+  for (let i = 0; i < d.length; i += 4) {
+    const al = d[i + 3]
+    if (al === 0) continue
+    const [r, g, b] = ramp(al / maxA)
+    d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 225
+  }
+  ctx.putImageData(img, 0, 0)
+}
+
+// Contour du plateau (secteurs + anneaux + numéros), faible, par-dessus la heatmap.
+function BoardOverlay() {
+  const cx = 100, cy = 100, R = 92
+  const polar = (r, deg) => { const a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cy + r * Math.sin(a)] }
+  return (
+    <svg viewBox="0 0 200 200" className="heat-overlay">
+      {DARTBOARD_ORDER.map((n, i) => { const [x1, y1] = polar(14, i * 18 + 9), [x2, y2] = polar(R, i * 18 + 9); return <line key={n} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#fff" strokeOpacity=".12" /> })}
+      {[R, R * 0.85, R * 0.59, R * 0.5, 14, 7].map((r, i) => <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke="#fff" strokeOpacity=".14" />)}
+      {DARTBOARD_ORDER.map((n, i) => { const [lx, ly] = polar(R + 7, i * 18); return <text key={n} x={lx} y={ly} fontSize="8" fill="#fff" fillOpacity=".75" fontFamily="Oswald" textAnchor="middle" dominantBaseline="central">{n}</text> })}
+    </svg>
+  )
 }
 
 export default function HeatBoard({ totals }) {
   const [filter, setFilter] = useState('all')
-  const count = (num, zone) => totals[(zone === 'double' ? 'D' : zone === 'triple' ? 'T' : '') + num] || 0
-  const bull25 = totals['25'] || 0   // bull simple (zone single)
-  const bull50 = totals['Bull'] || 0 // bull double (zone double)
-  const active = (zone) => filter === 'all' || filter === zone
-
-  let max = 1
-  SEGS.forEach((s) => { if (active(s.zone)) max = Math.max(max, count(s.num, s.zone)) })
-  if (active('single')) max = Math.max(max, bull25)
-  if (active('double')) max = Math.max(max, bull50)
+  const ref = useRef(null)
+  useEffect(() => { if (ref.current) drawHeat(ref.current, totals || {}, filter) }, [totals, filter])
 
   return (
     <div>
       <div className="tabs heat-tabs">
-        {FILTERS.map((f) => (
-          <button key={f.key} className={filter === f.key ? 'on' : ''} onClick={() => setFilter(f.key)}>{f.label}</button>
-        ))}
+        {FILTERS.map((f) => <button key={f.key} className={filter === f.key ? 'on' : ''} onClick={() => setFilter(f.key)}>{f.label}</button>)}
       </div>
-
-      <svg viewBox="0 0 200 200" style={{ width: 'min(80vw,320px)', display: 'block', margin: '4px auto 0' }}>
-        <circle cx={cx} cy={cy} r="92" fill="#05080699" stroke="var(--line-strong)" strokeWidth="1.5" />
-        {SEGS.map((s, i) => (
-          <path key={i} d={s.d} fill={heatColor(count(s.num, s.zone), max, active(s.zone))} stroke="#040705" strokeWidth=".4" strokeOpacity=".6" />
-        ))}
-        <circle cx={cx} cy={cy} r={rBullO} fill={heatColor(bull25, max, active('single'))} stroke="#040705" strokeWidth=".4" />
-        <circle cx={cx} cy={cy} r={rBullI} fill={heatColor(bull50, max, active('double'))} stroke="#040705" strokeWidth=".4" />
-        {LABELS.map((l) => (
-          <text key={l.num} x={l.lx} y={l.ly} fontSize="8" fill="#9FB4A6" fontFamily="Oswald" textAnchor="middle" dominantBaseline="central">{l.num}</text>
-        ))}
-      </svg>
-
+      <div className="heat-wrap">
+        <canvas ref={ref} width={400} height={400} className="heat-canvas" />
+        <BoardOverlay />
+      </div>
       <div className="heat-legend">
-        <span><i style={{ background: 'rgba(255,70,60,.85)' }} />Faibles</span>
-        <span><i style={{ background: 'rgba(255,210,60,.85)' }} />Moyennes</span>
-        <span><i style={{ background: 'rgba(57,255,106,.85)' }} />Excellentes</span>
+        <span><i style={{ background: 'rgb(28,52,150)' }} />Faibles</span>
+        <span><i style={{ background: 'rgb(40,200,110)' }} />Moyennes</span>
+        <span><i style={{ background: 'rgb(230,45,45)' }} />Chaudes</span>
       </div>
     </div>
   )

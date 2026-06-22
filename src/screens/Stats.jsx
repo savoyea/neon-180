@@ -4,6 +4,7 @@ import TopBar from '../components/TopBar.jsx'
 import Sparkline from '../components/Sparkline.jsx'
 import { useGame } from '../game/GameContext.jsx'
 import { useAuth } from '../lib/auth.jsx'
+import { MODE_LIST } from '../game/modes.js'
 
 const TABS = [
   { key: 'general', label: 'Général', modes: null },
@@ -11,6 +12,19 @@ const TABS = [
   { key: 'cricket', label: 'Cricket', modes: ['cricket'] },
   { key: 'defis', label: 'Défis', modes: ['atw', 'killer', 'countup', 'bar'] },
 ]
+
+function modeBreakdown(history, me) {
+  const by = {}
+  for (const h of history) {
+    const mine = h.players.find((p) => (p.name || '').toLowerCase() === me)
+    if (!mine) continue
+    const b = (by[h.mode] = by[h.mode] || { played: 0, wins: 0 })
+    b.played++; if (h.winner === mine.id) b.wins++
+  }
+  const rows = MODE_LIST.map((m) => ({ ico: m.ico, name: m.name, ...(by[m.key] || { played: 0, wins: 0 }) })).filter((r) => r.played > 0)
+  const max = Math.max(1, ...rows.map((r) => r.played))
+  return { rows, max }
+}
 
 function compute(history, me, modes) {
   const games = history
@@ -73,6 +87,27 @@ export default function Stats() {
               <div className="card"><Sparkline values={s.avgSeries} /></div>
             </>
           )}
+
+          {tab === 'general' && (() => {
+            const { rows, max } = modeBreakdown(history, me)
+            return rows.length > 0 && (
+              <>
+                <div className="section-title"><h2>Par mode de jeu</h2><span className="hint">victoires / parties</span></div>
+                {rows.map((r) => (
+                  <div className="modebar" key={r.name}>
+                    <span className="mb-ic">{r.ico}</span>
+                    <div className="mb-body">
+                      <div className="mb-top"><b>{r.name}</b><small>{r.wins}/{r.played} · {Math.round((r.wins / r.played) * 100)}%</small></div>
+                      <div className="mb-bar">
+                        <i className="mb-w" style={{ width: (r.wins / max * 100) + '%' }} />
+                        <i className="mb-l" style={{ width: ((r.played - r.wins) / max * 100) + '%' }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )
+          })()}
         </>
       )}
 
