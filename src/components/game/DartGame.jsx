@@ -27,20 +27,21 @@ export default function DartGame() {
       <div className="game-mid">
         {mode.board === 'cricket' && <CricketGrid game={game} />}
         {mode.board === 'atw' && <AtwBoard game={game} mode={mode} />}
-        <div className="turn-display">
-          <div className="who">
-            Volée de <b style={{ color: p.color }}>{p.name}</b>
-            {mode.key === 'atw' && game.sudden && <span className="sudden-badge">MORT SUBITE ☠</span>}
-          </div>
-          <div className="darts">
-            {[0, 1, 2].map((i) => {
-              const d = game.turn.darts[i]
-              return <div key={i} className={'dart-slot' + (d ? ' filled' : '')}>{d ? d.label : '·'}</div>
-            })}
-          </div>
-          <div className="turn-total">VOLÉE : {total}</div>
-          <div className="checkout-hint">{hint}</div>
+      </div>
+
+      <div className="turn-display">
+        <div className="who">
+          Volée de <b style={{ color: p.color }}>{p.name}</b>
+          {mode.key === 'atw' && game.sudden && <span className="sudden-badge">MORT SUBITE ☠</span>}
         </div>
+        <div className="darts">
+          {[0, 1, 2].map((i) => {
+            const d = game.turn.darts[i]
+            return <div key={i} className={'dart-slot' + (d ? ' filled' : '')}>{d ? d.label : '·'}</div>
+          })}
+        </div>
+        <div className="turn-total">VOLÉE : {total}</div>
+        <div className="checkout-hint">{hint}</div>
       </div>
 
       <div className="pad-dock">

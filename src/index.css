@@ -259,17 +259,37 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
 
 /* layout calculatrice : pavé épinglé, aucun scroll auto */
 .screen.playing{display:flex;flex-direction:column;overflow:hidden;
-  padding-bottom:calc(env(safe-area-inset-bottom) + 70px)}
-.screen.playing .players-strip{flex:none;margin-bottom:10px}
+  padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 8px)}
+.screen.playing .players-strip{flex:none;margin-bottom:8px}
 .screen.playing .game-mid{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .screen.playing .game-mid::-webkit-scrollbar{width:0}
-.screen.playing .pad-dock{flex:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
-.screen.playing .pcard{min-width:118px;padding:10px 13px}
-.screen.playing .pcard .pscore{font-size:32px;margin:2px 0 1px}
-.screen.playing .turn-display{margin:4px 0 6px}
-.screen.playing .dart-slot{height:46px;width:70px;font-size:18px}
-.screen.playing .pad button{font-size:19px;border-radius:13px}
-.screen.playing .pad button.wide{padding:12px 0}
+.screen.playing .pad-dock{flex:none;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+.screen.playing .pcard{min-width:108px;padding:8px 12px}
+.screen.playing .pcard .pname{font-size:13px}
+.screen.playing .pcard .pscore{font-size:26px;margin:1px 0}
+.screen.playing .pcard .psub{font-size:10px}
+/* volée en cours compacte, toujours visible au-dessus du pavé */
+.screen.playing .turn-display{flex:none;margin:6px 0 2px}
+.screen.playing .turn-display .who{font-size:11px}
+.screen.playing .turn-display .darts{gap:7px;margin-top:4px}
+.screen.playing .dart-slot{height:32px;width:52px;font-size:15px;border-radius:8px}
+.screen.playing .turn-total{font-size:12px;margin-top:4px}
+.screen.playing .checkout-hint{font-size:11px;min-height:12px}
+/* pavé compact : numéros réduits (tous les modes) */
+.screen.playing .mult-row{gap:6px;margin-bottom:6px}
+.screen.playing .mult-row .chip{padding:6px 0;font-size:13px}
+.screen.playing .pad{gap:5px}
+.screen.playing .pad button{aspect-ratio:1.85/1;font-size:15px;border-radius:9px}
+.screen.playing .pad button.wide{aspect-ratio:auto;padding:8px 0;font-size:13px}
+.screen.playing .game-actions{margin-top:6px}
+.screen.playing .game-actions .btn{padding:9px;font-size:12px}
+/* cricket compact pour tout voir */
+.screen.playing .cricket th{padding:3px 2px;font-size:11px}
+.screen.playing .cricket td{padding:2px}
+.screen.playing .cricket td .mark{font-size:clamp(14px,4.2vw,18px)}
+.screen.playing .cricket .numcol{font-size:clamp(12px,3.8vw,16px)}
+.screen.playing .cricket .ptsrow td{padding-top:5px;font-size:clamp(13px,4vw,17px)}
+.screen.playing .atw-target .big{font-size:44px}
 
 /* cricket grid — responsive mobile */
 .cricket-wrap{width:100%}

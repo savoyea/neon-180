@@ -41,7 +41,7 @@ export function GameProvider({ children }) {
     setRoster((prev) => {
       const cur = prev[0]
       if (cur?.isMe && cur.name === meName && (!meId || cur.id === meId)) return prev // déjà à jour
-      const others = prev.filter((p) => !p.isMe && p.id !== meId)
+      const others = prev.filter((p) => !p.isMe && p.id !== meId && (p.name || '').toLowerCase() !== meName.toLowerCase())
       const me = { id: meId || prev.find((p) => p.isMe)?.id || uid(), name: meName, color: PALETTE[0], isMe: true }
       const next = [me, ...others]
       if (next.length === 1) next.push({ id: uid(), name: 'Joueur 2', color: PALETTE[1] })

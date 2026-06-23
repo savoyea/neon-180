@@ -190,17 +190,18 @@ export default function OnlineGame() {
       <div className="game-mid">
         {mode.board === 'cricket' && <CricketGrid game={g} />}
         {mode.board === 'atw' && <AtwBoard game={g} mode={mode} />}
-        <div className="turn-display">
-          <div className="who">
-            {isMyTurn ? <>À <b style={{ color: 'var(--neon)' }}>toi</b> de jouer</> : <>Au tour de <b style={{ color: p.color }}>{p.name}</b></>}
-            {mode.key === 'atw' && g.sudden && <span className="sudden-badge">MORT SUBITE ☠</span>}
-          </div>
-          <div className="darts">
-            {[0, 1, 2].map((i) => { const d = g.turn.darts[i]; return <div key={i} className={'dart-slot' + (d ? ' filled' : '')}>{d ? d.label : '·'}</div> })}
-          </div>
-          <div className="turn-total">VOLÉE : {total}</div>
-          <div className="checkout-hint">{hint}</div>
+      </div>
+
+      <div className="turn-display">
+        <div className="who">
+          {isMyTurn ? <>À <b style={{ color: 'var(--neon)' }}>toi</b> de jouer</> : <>Au tour de <b style={{ color: p.color }}>{p.name}</b></>}
+          {mode.key === 'atw' && g.sudden && <span className="sudden-badge">MORT SUBITE ☠</span>}
         </div>
+        <div className="darts">
+          {[0, 1, 2].map((i) => { const d = g.turn.darts[i]; return <div key={i} className={'dart-slot' + (d ? ' filled' : '')}>{d ? d.label : '·'}</div> })}
+        </div>
+        <div className="turn-total">VOLÉE : {total}</div>
+        <div className="checkout-hint">{hint}</div>
       </div>
 
       <div className="pad-dock">
