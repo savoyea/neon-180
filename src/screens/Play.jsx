@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useGame } from '../game/GameContext.jsx'
 import { listModes, getMode } from '../game/engine/registry.js'
@@ -16,6 +16,11 @@ export default function Play() {
   const [pids, setPids] = useState(() => roster.slice(0, 2).map((r) => r.id))
   const [quick, setQuick] = useState('')
   const [err, setErr] = useState('')
+
+  // Si le roster se peuple après le montage (compte connecté), pré-sélectionne.
+  useEffect(() => {
+    if (pids.length === 0 && roster.length > 0) setPids(roster.slice(0, 2).map((r) => r.id))
+  }, [roster]) // eslint-disable-line
 
   function pickMode(k) {
     setModeKey(k)

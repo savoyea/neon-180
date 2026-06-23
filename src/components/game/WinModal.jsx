@@ -3,7 +3,7 @@ import { useGame } from '../../game/GameContext.jsx'
 import { getMode } from '../../game/engine/registry.js'
 
 export default function WinModal() {
-  const { winData, startGame, quitGame } = useGame()
+  const { winData, startGame, quitGame, dismissWin } = useGame()
   const nav = useNavigate()
   if (!winData) return null
 
@@ -37,7 +37,7 @@ export default function WinModal() {
             </div>
           ))}
         </div>
-        {record && <button className="btn ghost" style={{ marginBottom: 9 }} onClick={() => { quitGame(); nav('/game-analysis/' + record.id) }}>📊 Voir l’analyse de partie</button>}
+        {record && <button className="btn ghost" style={{ marginBottom: 9 }} onClick={() => { const rid = record.id; dismissWin(); nav('/game-analysis/' + rid); setTimeout(quitGame, 60) }}>📊 Voir l’analyse de partie</button>}
         <div className="modal-actions">
           <button className="btn ghost" onClick={home}>Accueil</button>
           <button className="btn primary" onClick={rematch}>Revanche</button>
