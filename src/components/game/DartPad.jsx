@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { tap } from '../../lib/feedback.js'
 
 // Pavé "calculatrice" : multiplicateur courant + secteurs. onHit(seg, mult).
 export default function DartPad({ config, onHit, disabled }) {
@@ -7,6 +8,7 @@ export default function DartPad({ config, onHit, disabled }) {
 
   function hit(seg) {
     if (disabled) return
+    tap()
     onHit(seg, mult)
     setMult(1)
   }

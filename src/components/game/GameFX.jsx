@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useGame } from '../../game/GameContext.jsx'
 import { useAuth } from '../../lib/auth.jsx'
 import { effectColor } from '../../game/cosmetics.js'
+import { fxSound } from '../../lib/feedback.js'
 
 // Overlay plein écran (180 !, BUST, GAME !…) + toast léger.
 export default function GameFX() {
@@ -11,6 +12,7 @@ export default function GameFX() {
 
   useEffect(() => {
     if (!fx.flash) return
+    fxSound(fx.flash.text)
     setFlashShown(true)
     const t1 = setTimeout(() => setFlashShown(false), 600)
     const t2 = setTimeout(() => clearFlash(), 800)

@@ -395,6 +395,11 @@ h1,h2,h3{font-family:'Oswald',sans-serif;font-weight:600;margin:0;letter-spacing
 .invite-actions{display:flex;gap:9px}
 .invite-actions .btn{flex:1}
 
+/* résultat ELO en fin de partie classée */
+.elo-result{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 0 14px}
+.elo-result .elo-delta{font-family:'Oswald';font-weight:700;font-size:24px;letter-spacing:.5px}
+.elo-result .elo-rank{font-size:12px;color:var(--muted);font-family:'Oswald';letter-spacing:.5px}
+
 /* phrase de célébration de ligue (chez le perdant) */
 .celebration{margin:2px 0 16px;padding:14px;border:1px solid var(--line-strong);border-radius:var(--r-sm);
   background:radial-gradient(120% 120% at 50% 0%, rgba(57,255,106,.12), transparent 70%)}

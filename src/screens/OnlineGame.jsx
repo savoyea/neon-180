@@ -5,6 +5,8 @@ import { useGame } from '../game/GameContext.jsx'
 import { supabase } from '../lib/supabase.js'
 import { getMatch, getMessages, sendMessage, persistMatch } from '../lib/matches.js'
 import { getWinnerCelebration } from '../lib/leagues.js'
+import { rankTier } from '../lib/ranked.js'
+import { fxSound } from '../lib/feedback.js'
 import { applyDart, endTurn as engineEndTurn, buildRecord } from '../game/engine/core.js'
 import { getMode } from '../game/engine/registry.js'
 import TopBar from '../components/TopBar.jsx'
@@ -22,10 +24,12 @@ const EMOTE_COOLDOWN = 120 // secondes (offre gratuite)
 export default function OnlineGame() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const { saveRecord } = useGame()
   const myId = user?.id
   const premium = Boolean(profile?.is_premium)
+  const eloStart = useRef(null)
+  const [eloInfo, setEloInfo] = useState(null)
 
   const [match, setMatch] = useState(null)
   const [messages, setMessages] = useState([])
@@ -93,18 +97,28 @@ export default function OnlineGame() {
   useEffect(() => {
     if (g?.fx && g.fx.key !== lastFx.current) {
       lastFx.current = g.fx.key
+      fxSound(g.fx.text)
       setFlash(g.fx.text)
       const t = setTimeout(() => setFlash(null), 750)
       return () => clearTimeout(t)
     }
   }, [g?.fx])
 
+  // Capture l'ELO d'avant-partie (pour afficher le gain en fin de partie classée).
+  useEffect(() => { if (profile?.elo != null && eloStart.current == null) eloStart.current = profile.elo }, [profile])
+
   // Fin de partie → historique + stats serveur + phrase de célébration (perdant)
   useEffect(() => {
     if (match?.status === 'finished' && g && !savedRef.current) {
       savedRef.current = true
       saveRecord(buildRecord(g))
-      supabase.rpc('apply_match_result', { p_match: id }).catch(() => {})
+      supabase.rpc('apply_match_result', { p_match: id }).then(async () => {
+        if (match.ranked && eloStart.current != null && myId) {
+          const { data } = await supabase.from('profiles').select('elo').eq('id', myId).single()
+          if (data) setEloInfo({ delta: data.elo - eloStart.current, elo: data.elo })
+          refreshProfile && refreshProfile()
+        }
+      }).catch(() => {})
       if (g.winner && g.winner !== myId) {
         getWinnerCelebration(g.winner).then((c) => c && setCeleb(c)).catch(() => {})
       }
@@ -268,6 +282,12 @@ export default function OnlineGame() {
             <div className="trophy">🏆</div>
             <h2>Vainqueur</h2>
             <div className="winner" style={{ color: winner.color }}>{winner.name}</div>
+            {eloInfo && (
+              <div className="elo-result">
+                <span className="elo-delta" style={{ color: eloInfo.delta >= 0 ? 'var(--neon)' : 'var(--red)' }}>{eloInfo.delta >= 0 ? '+' : ''}{eloInfo.delta} ELO</span>
+                <span className="elo-rank">{rankTier(eloInfo.elo).emoji} {rankTier(eloInfo.elo).name} · {eloInfo.elo}</span>
+              </div>
+            )}
             {celeb && (
               <div className="celebration">
                 <div className="cel-emoji">{celeb.emoji}</div>
