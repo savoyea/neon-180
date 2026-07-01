@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.jsx'
-import { supabase, isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { getIncomingInvites, acceptInvite, declineInvite } from '../lib/matches.js'
 import { getMode } from '../game/engine/registry.js'
 
-// Surveille les invitations entrantes et affiche une bannière "X t'invite à jouer".
 export default function InviteWatcher() {
   const { user } = useAuth()
   const nav = useNavigate()
@@ -21,11 +20,11 @@ export default function InviteWatcher() {
   useEffect(() => { refresh() }, [refresh])
 
   useEffect(() => {
-    if (!isConfigured || !myId) return
-    const ch = supabase.channel('invites:' + myId)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: 'guest_id=eq.' + myId }, () => refresh())
-      .subscribe()
-    return () => { supabase.removeChannel(ch) }
+    if (!myId) return
+    pb.collection('matches').subscribe('*', (e) => {
+      if (e.record.guest_id === myId) refresh()
+    }).catch(() => {})
+    return () => { pb.collection('matches').unsubscribe() }
   }, [myId, refresh])
 
   if (invites.length === 0) return null
@@ -35,7 +34,7 @@ export default function InviteWatcher() {
   async function accept() {
     setBusy(true)
     try { await acceptInvite(inv); nav('/match/' + inv.id) }
-    catch (e) { setBusy(false); refresh() }
+    catch { setBusy(false); refresh() }
   }
   async function decline() {
     setBusy(true)
@@ -44,7 +43,7 @@ export default function InviteWatcher() {
 
   return (
     <div className="invite-banner">
-      <div className="it">🎯 <b>{inv.host?.username || 'Un joueur'}</b> t’invite à jouer un <b>{mode?.name || inv.mode}</b> !</div>
+      <div className="it">🎯 <b>{inv.host?.username || 'Un joueur'}</b> t'invite à jouer un <b>{mode?.name || inv.mode}</b> !</div>
       <div className="invite-actions">
         <button className="btn ghost" disabled={busy} onClick={decline}>Refuser</button>
         <button className="btn primary" disabled={busy} onClick={accept}>Accepter &amp; jouer</button>

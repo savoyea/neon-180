@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { supabase, isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import {
   searchProfiles, getFriendships, relationMap,
   sendRequest, acceptRequest, removeFriendship,
@@ -49,12 +49,9 @@ export default function Friends() {
   // Realtime : rafraîchit dès qu'une de mes relations change (ex : ma demande
   // vient d'être acceptée par l'autre joueur) — sans recharger la page.
   useEffect(() => {
-    if (!isConfigured || !myId) return
-    const ch = supabase
-      .channel('friendships:' + myId)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => refresh())
-      .subscribe()
-    return () => { supabase.removeChannel(ch) }
+    if (!pb.authStore.isValid || !myId) return
+    pb.collection('friendships').subscribe('*', () => refresh()).catch(() => {})
+    return () => { pb.collection('friendships').unsubscribe() }
   }, [myId, refresh])
 
   // Envoi de demande avec retour visuel immédiat (bouton → « En attente »).
@@ -82,11 +79,11 @@ export default function Friends() {
 
   async function act(fn) { setBusy(true); try { await fn() } finally { setBusy(false); refresh() } }
 
-  if (!isConfigured) {
+  if (!pb.authStore.isValid) {
     return (
       <div className="screen">
         <TopBar title="Amis" />
-        <div className="empty"><div className="big">👥</div><p>Connecte Supabase et crée un compte pour ajouter des amis.</p></div>
+        <div className="empty"><div className="big">👥</div><p>Connecte-toi pour ajouter des amis.</p></div>
       </div>
     )
   }

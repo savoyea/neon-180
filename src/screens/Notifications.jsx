@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { getFriendships, acceptRequest, removeFriendship } from '../lib/friends.js'
 import { getIncomingInvites, acceptInvite, declineInvite } from '../lib/matches.js'
 import { getMode } from '../game/engine/registry.js'
@@ -30,7 +30,7 @@ export default function Notifications() {
     ...reqs.map((r) => ({ kind: 'friend', cat: 'social', data: r, ts: null })),
   ].filter((it) => tab === 'toutes' || it.cat === tab)
 
-  if (!isConfigured) {
+  if (!pb.authStore.isValid) {
     return <div className="screen"><TopBar back title="Notifications" /><div className="empty"><div className="big">🔔</div><p>Connecte-toi pour recevoir des notifications.</p></div></div>
   }
 

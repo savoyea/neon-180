@@ -5,6 +5,6 @@ import react from '@vitejs/plugin-react'
 // En dev, base reste '/'.
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: command === 'build' ? '/neon-180/' : '/',
+  base: '/',
   server: { port: 4180, host: true },
 }))

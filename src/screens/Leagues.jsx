@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { getMyLeagues, discoverLeagues, createLeague, joinLeague } from '../lib/leagues.js'
 
 function LeagueCard({ league, onClick, right }) {
@@ -44,7 +44,7 @@ export default function Leagues() {
     finally { setBusy(false); refresh() }
   }
 
-  if (!isConfigured) {
+  if (!pb.authStore.isValid) {
     return <div className="screen"><TopBar title="Ligues" /><div className="empty"><div className="big">🛡️</div><p>Connecte-toi pour rejoindre des ligues.</p></div></div>
   }
 

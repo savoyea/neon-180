@@ -12,12 +12,12 @@ export default function GameFX() {
 
   useEffect(() => {
     if (!fx.flash) return
-    fxSound(fx.flash.text)
+    try { fxSound(fx.flash.text) } catch { /* AudioContext peut ne pas être prêt */ }
     setFlashShown(true)
     const t1 = setTimeout(() => setFlashShown(false), 600)
     const t2 = setTimeout(() => clearFlash(), 800)
     return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [fx.flash, clearFlash])
+  }, [fx.flash?.key]) // clé primitive → pas de re-run si l'objet change de référence
 
   useEffect(() => {
     if (!fx.toast) return

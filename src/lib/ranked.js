@@ -1,4 +1,4 @@
-import { supabase, isConfigured } from './supabase.js'
+import { pb } from './pocketbase.js'
 
 export const TIERS = [
   { min: 1800, key: 'legende', name: 'Légende', emoji: '👑', color: '#FF5CE1' },
@@ -9,7 +9,6 @@ export const TIERS = [
   { min: 0, key: 'bronze', name: 'Bronze', emoji: '🥉', color: '#CD7F32' },
 ]
 export function rankTier(elo) { return TIERS.find((t) => (elo ?? 1000) >= t.min) }
-// progression vers le rang suivant (0-100)
 export function tierProgress(elo) {
   const e = elo ?? 1000
   const idx = TIERS.findIndex((t) => e >= t.min)
@@ -19,26 +18,33 @@ export function tierProgress(elo) {
 }
 
 export async function getRankedLeaderboard() {
-  if (!isConfigured) return []
-  const { data, error } = await supabase
-    .from('profiles').select('id, username, level, elo, games_played, wins')
-    .order('elo', { ascending: false }).limit(50)
-  if (error) throw error
-  return data || []
+  try {
+    const result = await pb.collection('users').getList(1, 50, {
+      fields: 'id,username,level,elo,games_played,wins',
+      sort: '-elo',
+    })
+    return result.items
+  } catch { return [] }
 }
 
+// Appelle le hook serveur PocketBase qui gère le matchmaking atomique
 export async function findRankedMatch() {
-  const { data, error } = await supabase.rpc('find_ranked_match')
-  if (error) throw error
-  return data // match_id | null
+  const res = await pb.send('/api/actions/find_ranked_match', { method: 'POST' })
+  return res?.match_id || null
 }
+
 export async function leaveQueue() {
-  try { await supabase.rpc('leave_ranked_queue') } catch (e) { /* ignore */ }
+  try {
+    const me = pb.authStore.model?.id
+    if (!me) return
+    const row = await pb.collection('ranked_queue').getFirstListItem(`player_id = "${me}"`).catch(() => null)
+    if (row) await pb.collection('ranked_queue').delete(row.id)
+  } catch { /* ignore */ }
 }
 
 export async function rankingByMode(mode) {
-  if (!isConfigured) return []
-  const { data, error } = await supabase.rpc('global_ranking_by_mode', { p_mode: mode })
-  if (error) throw error
-  return data || []
+  try {
+    const res = await pb.send(`/api/actions/ranking_by_mode?mode=${encodeURIComponent(mode)}`, { method: 'GET' })
+    return res || []
+  } catch { return [] }
 }

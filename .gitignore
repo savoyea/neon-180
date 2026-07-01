@@ -4,3 +4,4 @@ dist
 .db-url
 .DS_Store
 *.local
+.idea/

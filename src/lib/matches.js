@@ -1,47 +1,42 @@
-import { supabase, isConfigured } from './supabase.js'
+import { pb } from './pocketbase.js'
 import { createGame } from '../game/engine/core.js'
 import { PALETTE } from '../game/engine/constants.js'
 
-const HOST = 'host:host_id (id, username)'
-const GUEST = 'guest:guest_id (id, username)'
-
-// Modes jouables en ligne (on exclut le Défi de bar, jeu de comptoir local).
 export const ONLINE_MODES = ['x01', 'cricket', 'atw', 'killer', 'countup']
 
 export async function createInvite(hostId, guestId, mode, options, ranked = false) {
-  const { data, error } = await supabase.from('matches')
-    .insert({ host_id: hostId, guest_id: guestId, mode, options, status: 'invited', ranked })
-    .select().single()
-  if (error) throw error
-  return data
+  return await pb.collection('matches').create({
+    host_id: hostId, guest_id: guestId, mode, options, status: 'invited', ranked,
+  })
 }
 
 export async function getIncomingInvites(myId) {
-  if (!isConfigured) return []
-  const { data, error } = await supabase.from('matches')
-    .select(`*, ${HOST}`).eq('guest_id', myId).eq('status', 'invited')
-    .order('created_at', { ascending: false })
-  if (error) throw error
-  return data || []
+  try {
+    const result = await pb.collection('matches').getFullList({
+      filter: `guest_id = "${myId}" && status = "invited"`,
+      expand: 'host_id',
+      sort: '-created',
+    })
+    return result.map((r) => ({ ...r, host: r.expand?.host_id }))
+  } catch { return [] }
 }
 
 export async function getActiveMatches(myId) {
-  if (!isConfigured) return []
-  const { data, error } = await supabase.from('matches')
-    .select(`*, ${HOST}, ${GUEST}`)
-    .or(`host_id.eq.${myId},guest_id.eq.${myId}`).eq('status', 'active')
-    .order('updated_at', { ascending: false })
-  if (error) throw error
-  return data || []
+  try {
+    const result = await pb.collection('matches').getFullList({
+      filter: `(host_id = "${myId}" || guest_id = "${myId}") && status = "active"`,
+      expand: 'host_id,guest_id',
+      sort: '-updated',
+    })
+    return result.map((r) => ({ ...r, host: r.expand?.host_id, guest: r.expand?.guest_id }))
+  } catch { return [] }
 }
 
 export async function getMatch(id) {
-  const { data, error } = await supabase.from('matches').select(`*, ${HOST}, ${GUEST}`).eq('id', id).single()
-  if (error) throw error
-  return data
+  const record = await pb.collection('matches').getOne(id, { expand: 'host_id,guest_id' })
+  return { ...record, host: record.expand?.host_id, guest: record.expand?.guest_id }
 }
 
-// Le destinataire accepte : on initialise l'état de jeu et on passe en "active".
 export async function acceptInvite(match) {
   const players = [
     { id: match.host_id, name: match.host?.username || 'Hôte', color: PALETTE[0] },
@@ -49,30 +44,29 @@ export async function acceptInvite(match) {
   ]
   const state = createGame(match.mode, players, match.options)
   state.snaps = []
-  const { error } = await supabase.from('matches')
-    .update({ state, status: 'active', turn_player_id: state.players[state.turn.pi].id, updated_at: new Date().toISOString() })
-    .eq('id', match.id)
-  if (error) throw error
+  await pb.collection('matches').update(match.id, {
+    state, status: 'active', turn_player_id: state.players[state.turn.pi].id,
+  })
 }
 
 export async function declineInvite(id) {
-  const { error } = await supabase.from('matches').update({ status: 'declined' }).eq('id', id)
-  if (error) throw error
+  await pb.collection('matches').update(id, { status: 'declined' })
 }
 
 export async function persistMatch(id, fields) {
-  const { error } = await supabase.from('matches').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
-  if (error) throw error
+  await pb.collection('matches').update(id, fields)
 }
 
 // ---- Chat ----
 export async function getMessages(matchId) {
-  const { data, error } = await supabase.from('match_messages')
-    .select('*').eq('match_id', matchId).order('created_at', { ascending: true })
-  if (error) throw error
-  return data || []
+  try {
+    const result = await pb.collection('match_messages').getFullList({
+      filter: `match_id = "${matchId}"`,
+      sort: 'created',
+    })
+    return result
+  } catch { return [] }
 }
 export async function sendMessage(matchId, senderId, body) {
-  const { error } = await supabase.from('match_messages').insert({ match_id: matchId, sender_id: senderId, body })
-  if (error) throw error
+  await pb.collection('match_messages').create({ match_id: matchId, sender_id: senderId, body })
 }

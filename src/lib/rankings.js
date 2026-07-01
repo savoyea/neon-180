@@ -1,6 +1,5 @@
-import { supabase, isConfigured } from './supabase.js'
+import { pb } from './pocketbase.js'
 
-// Classement mondial selon une métrique.
 export const RANK_METRICS = [
   { key: 'level', label: 'Niveau', col: 'xp', fmt: (p) => 'Niv ' + p.level },
   { key: 'wins', label: 'Victoires', col: 'wins', fmt: (p) => p.wins + ' V' },
@@ -8,11 +7,12 @@ export const RANK_METRICS = [
 ]
 
 export async function globalRanking(metricKey) {
-  if (!isConfigured) return []
   const metric = RANK_METRICS.find((m) => m.key === metricKey) || RANK_METRICS[0]
-  const { data, error } = await supabase
-    .from('profiles').select('id, username, level, xp, wins, total_180, games_played')
-    .order(metric.col, { ascending: false }).order('xp', { ascending: false }).limit(50)
-  if (error) throw error
-  return data || []
+  try {
+    const result = await pb.collection('users').getList(1, 50, {
+      fields: 'id,username,level,xp,wins,total_180,games_played',
+      sort: `-${metric.col},-xp`,
+    })
+    return result.items
+  } catch { return [] }
 }

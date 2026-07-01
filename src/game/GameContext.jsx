@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import { useAuth } from '../lib/auth.jsx'
-import { supabase, isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { PALETTE, uid } from './engine/constants.js'
 import { createGame, applyDart, endTurn as engineEndTurn, undo as engineUndo, modeAction, buildRecord } from './engine/core.js'
 
@@ -51,10 +51,15 @@ export function GameProvider({ children }) {
 
   // Charge l'historique depuis la base (toutes les parties), sinon localStorage.
   useEffect(() => {
-    if (isConfigured && user?.id) {
-      supabase.from('games').select('record').eq('created_by', user.id).order('played_at', { ascending: false }).limit(200)
-        .then(({ data }) => { if (data) setHistory(data.map((r) => r.record).filter(Boolean)) })
-    }
+    if (!user?.id) return
+    pb.collection('games').getList(1, 200, {
+      filter: `created_by = "${user.id}"`,
+      fields: 'record',
+      sort: '-played_at',
+    }).then((res) => {
+      const records = res.items.map((r) => r.record).filter(Boolean)
+      if (records.length) setHistory(records)
+    }).catch(() => {})
   }, [user])
 
   const addPlayer = useCallback((name) => {
@@ -69,11 +74,16 @@ export function GameProvider({ children }) {
     const next = [record, ...h].slice(0, 200); save(HISTORY_KEY, next); return next
   })
 
-  // Partie EN LIGNE terminée : stats déjà gérées par apply_match_result,
+  // Partie EN LIGNE terminée : stats déjà gérées par apply_match_result côté hook PB,
   // on enregistre juste le détail de la partie en base (sans recompter les stats).
   const saveRecord = useCallback((record) => {
     pushHistory(record)
-    if (isConfigured) supabase.rpc('log_game', { p_record: record, p_update_stats: false, p_online: true }).catch(() => {})
+    if (pb.authStore.isValid) {
+      pb.send('/api/actions/log_game', {
+        method: 'POST',
+        body: JSON.stringify({ record, update_stats: false, online: true }),
+      }).catch(() => {})
+    }
   }, [])
 
   // Partie LOCALE terminée : enregistre en base ET met à jour les stats du compte.
@@ -81,9 +91,11 @@ export function GameProvider({ children }) {
     const record = buildRecord(g)
     pushHistory(record)
     setWinData({ game: g, record })
-    if (isConfigured) {
-      supabase.rpc('log_game', { p_record: record, p_update_stats: true, p_online: false })
-        .then(() => refreshProfile && refreshProfile()).catch(() => {})
+    if (pb.authStore.isValid) {
+      pb.send('/api/actions/log_game', {
+        method: 'POST',
+        body: JSON.stringify({ record, update_stats: true, online: false }),
+      }).then(() => refreshProfile && refreshProfile()).catch(() => {})
     }
   }, [refreshProfile])
 

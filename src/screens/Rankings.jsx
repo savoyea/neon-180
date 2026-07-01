@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { globalRanking } from '../lib/rankings.js'
 import { rankingByMode } from '../lib/ranked.js'
 
@@ -36,7 +36,7 @@ export default function Rankings() {
         {TABS.map((x) => <button key={x.key} className={tab === x.key ? 'on' : ''} onClick={() => setTab(x.key)}>{x.label}</button>)}
       </div>
 
-      {!isConfigured ? (
+      {!pb.authStore.isValid ? (
         <div className="empty"><div className="big">🏆</div><p>Connecte-toi pour voir le classement.</p></div>
       ) : loading ? (
         <div className="empty"><div className="spinner" /></div>

@@ -1,133 +1,94 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { supabase, isConfigured } from './supabase'
+import { pb } from './pocketbase'
 
 const AuthContext = createContext(null)
-const DEMO_KEY = 'dart180_demo_session'
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
+  const [user, setUser] = useState(pb.authStore.isValid ? pb.authStore.model : null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // ----- Chargement initial -----
   useEffect(() => {
-    let active = true
     async function init() {
-      if (isConfigured) {
-        const { data } = await supabase.auth.getSession()
-        if (!active) return
-        setSession(data.session)
-        if (data.session) await loadProfile(data.session.user)
-        setLoading(false)
-        supabase.auth.onAuthStateChange((_e, s) => {
-          setSession(s)
-          if (s) loadProfile(s.user)
-          else setProfile(null)
-        })
-      } else {
-        // Mode démo : session locale
-        try {
-          const raw = localStorage.getItem(DEMO_KEY)
-          if (raw) {
-            const p = JSON.parse(raw)
-            setSession({ user: { id: p.id, email: p.email } })
-            setProfile(p)
-          }
-        } catch (e) { /* ignore */ }
-        setLoading(false)
+      if (pb.authStore.isValid) {
+        await loadProfile(pb.authStore.model.id)
       }
+      setLoading(false)
     }
     init()
-    return () => { active = false }
+
+    const unsub = pb.authStore.onChange((_token, model) => {
+      setUser(model || null)
+      if (model) loadProfile(model.id)
+      else setProfile(null)
+    })
+    return () => unsub()
   }, [])
 
-  async function loadProfile(user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle()
-    if (data) {
+  async function loadProfile(id) {
+    try {
+      const data = await pb.collection('users').getOne(id)
       setProfile(data)
-    } else {
-      // fallback minimal si la ligne profil n'existe pas encore
-      setProfile({ id: user.id, username: user.user_metadata?.username || 'Joueur', level: 1, xp: 0 })
+    } catch {
+      setProfile({ id, username: 'Joueur', level: 1, xp: 0 })
     }
   }
 
   // ----- Inscription -----
   const signUp = useCallback(async ({ username, email, password }) => {
-    if (!isConfigured) {
-      const demo = { id: 'demo-' + Date.now(), username, email, level: 1, xp: 0, demo: true }
-      localStorage.setItem(DEMO_KEY, JSON.stringify(demo))
-      setSession({ user: { id: demo.id, email } })
-      setProfile(demo)
+    try {
+      await pb.collection('users').create({
+        username, email, password, passwordConfirm: password,
+      })
+      await pb.collection('users').authWithPassword(email, password)
+      // Le hook PocketBase crée automatiquement le profil après création
       return { error: null }
+    } catch (e) {
+      return { error: { message: e.message } }
     }
-    const { data, error } = await supabase.auth.signUp({
-      email, password, options: { data: { username } },
-    })
-    if (error) return { error }
-    // Si une session existe déjà (confirmation email désactivée), complète le profil.
-    if (data.session && data.user) {
-      await supabase.from('profiles').upsert({ id: data.user.id, username }, { onConflict: 'id' })
-    }
-    // Sinon, confirmation email requise : pas encore de session.
-    return { error: null, needsConfirm: !data.session }
   }, [])
 
   // ----- Connexion -----
   const signIn = useCallback(async ({ email, password }) => {
-    if (!isConfigured) {
-      const raw = localStorage.getItem(DEMO_KEY)
-      const demo = raw ? JSON.parse(raw) : { id: 'demo-' + Date.now(), username: email.split('@')[0], email, level: 1, xp: 0, demo: true }
-      localStorage.setItem(DEMO_KEY, JSON.stringify(demo))
-      setSession({ user: { id: demo.id, email: demo.email } })
-      setProfile(demo)
+    try {
+      await pb.collection('users').authWithPassword(email, password)
       return { error: null }
+    } catch (e) {
+      return { error: { message: e.message } }
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
   }, [])
 
-  // Recharge le profil depuis la base (après une partie : stats à jour).
+  // Recharge le profil depuis la base (après une partie).
   const refreshProfile = useCallback(async () => {
-    if (isConfigured && session?.user) await loadProfile(session.user)
-  }, [session])
+    if (user?.id) await loadProfile(user.id)
+  }, [user])
 
-  // ----- Mise à jour du profil (réglages) -----
+  // ----- Mise à jour du profil -----
   const updateProfile = useCallback(async (fields) => {
-    if (!isConfigured) {
-      setProfile((prev) => {
-        const next = { ...prev, ...fields }
-        try { localStorage.setItem(DEMO_KEY, JSON.stringify(next)) } catch (e) { /* ignore */ }
-        return next
-      })
-      return { error: null }
-    }
-    setProfile((prev) => ({ ...prev, ...fields }))
-    const uid = session?.user?.id
+    const uid = user?.id
     if (!uid) return { error: null }
-    const { error } = await supabase.from('profiles').update(fields).eq('id', uid)
-    return { error }
-  }, [session])
+    try {
+      const data = await pb.collection('users').update(uid, fields)
+      setProfile(data)
+      return { error: null }
+    } catch (e) {
+      return { error: { message: e.message } }
+    }
+  }, [user])
 
   // ----- Déconnexion -----
   const signOut = useCallback(async () => {
-    if (!isConfigured) {
-      localStorage.removeItem(DEMO_KEY)
-    } else {
-      await supabase.auth.signOut()
-    }
-    setSession(null)
+    pb.authStore.clear()
+    setUser(null)
     setProfile(null)
   }, [])
 
   const value = {
-    session, profile, loading,
-    user: session?.user || null,
-    isAuthed: Boolean(session),
-    isDemo: !isConfigured,
+    session: user ? { user } : null,
+    profile, loading,
+    user,
+    isAuthed: Boolean(user),
+    isDemo: false,
     signUp, signIn, signOut, updateProfile, refreshProfile,
   }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

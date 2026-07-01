@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TopBar from '../components/TopBar.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { supabase, isConfigured } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { getRankedLeaderboard, findRankedMatch, leaveQueue, rankTier, tierProgress } from '../lib/ranked.js'
 import { getMatch, acceptInvite } from '../lib/matches.js'
 
@@ -12,10 +12,13 @@ export default function Ranked() {
   const myId = user?.id
   const [board, setBoard] = useState([])
   const [searching, setSearching] = useState(false)
-  const queueCh = useRef(null)
+  const searchingRef = useRef(false)
 
   useEffect(() => { getRankedLeaderboard().then(setBoard).catch(() => {}) }, [])
-  useEffect(() => () => { if (queueCh.current) supabase.removeChannel(queueCh.current); if (searching) leaveQueue() }, []) // eslint-disable-line
+  useEffect(() => () => {
+    if (searchingRef.current) leaveQueue()
+    pb.collection('matches').unsubscribe()
+  }, [])
 
   const elo = profile?.elo ?? 1000
   const tier = rankTier(elo)
@@ -23,6 +26,7 @@ export default function Ranked() {
 
   async function quickMatch() {
     setSearching(true)
+    searchingRef.current = true
     try {
       const matchId = await findRankedMatch()
       if (matchId) { // apparié : je suis l'invité, j'initialise l'état
@@ -30,21 +34,23 @@ export default function Ranked() {
         await acceptInvite(m)
         nav('/match/' + matchId)
       } else { // en attente : je serai l'hôte quand on m'appariera
-        const ch = supabase.channel('rankedwait:' + myId)
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matches', filter: 'host_id=eq.' + myId },
-            (p) => { if (p.new.ranked) { supabase.removeChannel(ch); nav('/match/' + p.new.id) } })
-          .subscribe()
-        queueCh.current = ch
+        pb.collection('matches').subscribe('*', (e) => {
+          if (e.action === 'create' && e.record.host_id === myId && e.record.ranked) {
+            pb.collection('matches').unsubscribe()
+            nav('/match/' + e.record.id)
+          }
+        }).catch(() => {})
       }
-    } catch (e) { setSearching(false) }
+    } catch { setSearching(false); searchingRef.current = false }
   }
   function cancel() {
     leaveQueue()
-    if (queueCh.current) { supabase.removeChannel(queueCh.current); queueCh.current = null }
+    pb.collection('matches').unsubscribe()
     setSearching(false)
+    searchingRef.current = false
   }
 
-  if (!isConfigured) {
+  if (!pb.authStore.isValid) {
     return <div className="screen"><TopBar back title="Mode classé" /><div className="empty"><div className="big">🏆</div><p>Connecte-toi pour jouer en classé.</p></div></div>
   }
 

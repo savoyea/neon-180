@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.jsx'
 import { useGame } from '../game/GameContext.jsx'
-import { supabase } from '../lib/supabase.js'
+import { pb } from '../lib/pocketbase.js'
 import { getMatch, getMessages, sendMessage, persistMatch } from '../lib/matches.js'
 import { getWinnerCelebration } from '../lib/leagues.js'
 import { rankTier } from '../lib/ranked.js'
@@ -72,21 +72,25 @@ export default function OnlineGame() {
     let active = true
     getMatch(id).then((m) => { if (active) setMatchBoth(m) }).catch(() => setErr('Partie introuvable'))
     getMessages(id).then((m) => active && setMessages(m)).catch(() => {})
-    const ch = supabase.channel('match:' + id)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: 'id=eq.' + id },
-        (p) => setMatchBoth((prev) => ({ ...prev, ...p.new })))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'match_messages', filter: 'match_id=eq.' + id },
-        (p) => {
-          const body = p.new.body || ''
-          if (body.startsWith(EMOTE_PREFIX)) { setEmoteFly({ e: body.slice(EMOTE_PREFIX.length), key: Date.now() }); return }
-          setMessages((m) => (m.some((x) => x.id === p.new.id) ? m : [...m, p.new]))
-          if (p.new.sender_id !== myId && !chatOpenRef.current) {
-            setUnread((u) => u + 1)
-            setNotif({ text: body, key: Date.now() })
-          }
-        })
-      .subscribe()
-    return () => { active = false; supabase.removeChannel(ch); timers.current.forEach(clearTimeout); timers.current = [] }
+    pb.collection('matches').subscribe(id, (e) => {
+      if (e.action === 'update') setMatchBoth((prev) => ({ ...prev, ...e.record }))
+    }).catch(() => {})
+    pb.collection('match_messages').subscribe('*', (e) => {
+      if (e.action !== 'create' || e.record.match_id !== id) return
+      const body = e.record.body || ''
+      if (body.startsWith(EMOTE_PREFIX)) { setEmoteFly({ e: body.slice(EMOTE_PREFIX.length), key: Date.now() }); return }
+      setMessages((m) => (m.some((x) => x.id === e.record.id) ? m : [...m, e.record]))
+      if (e.record.sender_id !== myId && !chatOpenRef.current) {
+        setUnread((u) => u + 1)
+        setNotif({ text: body, key: Date.now() })
+      }
+    }).catch(() => {})
+    return () => {
+      active = false
+      pb.collection('matches').unsubscribe(id)
+      pb.collection('match_messages').unsubscribe()
+      timers.current.forEach(clearTimeout); timers.current = []
+    }
   }, [id])
 
   const g = match?.state
@@ -112,10 +116,15 @@ export default function OnlineGame() {
     if (match?.status === 'finished' && g && !savedRef.current) {
       savedRef.current = true
       saveRecord(buildRecord(g))
-      supabase.rpc('apply_match_result', { p_match: id }).then(async () => {
-        if (match.ranked && eloStart.current != null && myId) {
-          const { data } = await supabase.from('profiles').select('elo').eq('id', myId).single()
-          if (data) setEloInfo({ delta: data.elo - eloStart.current, elo: data.elo })
+      pb.send('/api/actions/apply_match_result', {
+        method: 'POST',
+        body: JSON.stringify({ match_id: id }),
+      }).then(async () => {
+        if (match?.ranked && eloStart.current != null && myId) {
+          try {
+            const data = await pb.collection('users').getOne(myId, { fields: 'elo' })
+            if (data) setEloInfo({ delta: data.elo - eloStart.current, elo: data.elo })
+          } catch { /* ignore */ }
           refreshProfile && refreshProfile()
         }
       }).catch(() => {})
@@ -285,7 +294,7 @@ export default function OnlineGame() {
             {eloInfo && (
               <div className="elo-result">
                 <span className="elo-delta" style={{ color: eloInfo.delta >= 0 ? 'var(--neon)' : 'var(--red)' }}>{eloInfo.delta >= 0 ? '+' : ''}{eloInfo.delta} ELO</span>
-                <span className="elo-rank">{rankTier(eloInfo.elo).emoji} {rankTier(eloInfo.elo).name} · {eloInfo.elo}</span>
+                <span className="elo-rank">{rankTier(eloInfo.elo)?.emoji} {rankTier(eloInfo.elo)?.name} · {eloInfo.elo}</span>
               </div>
             )}
             {celeb && (
